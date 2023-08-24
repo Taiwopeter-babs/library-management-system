@@ -1,5 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import Base from './BaseController';
+import BooksAuthors from './BookAuthorController';
+import BooksGenres from './BookGenreController';
 import BooksUsers from './BookUserController';
 import User from './UserController';
 
@@ -34,6 +36,14 @@ class Book extends Base {
   // relationship books-users
   @OneToMany(() => BooksUsers, booksUsers => booksUsers.book)
   booksToUsers: BooksUsers[];
+
+  // relationship books-authors
+  @OneToMany(() => BooksAuthors, booksAuthors => booksAuthors.book)
+  booksToAuthors: BooksAuthors[];
+
+  // relationship books-genres
+  @OneToMany(() => BooksGenres, booksGenres => booksGenres.book)
+  booksToGenres: BooksGenres[];
 }
 
 export default Book;
