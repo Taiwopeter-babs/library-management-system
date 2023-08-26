@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryColumn, CreateDateColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryColumn, CreateDateColumn, Column } from 'typeorm';
 import Book from './BookController';
 import User from './UserController';
 
@@ -28,6 +28,7 @@ class BooksUsers {
     { onUpdate: 'CASCADE', onDelete: 'CASCADE' })
   @JoinColumn({ name: 'bookId' })
   book: Book;
+
 }
 
 export default BooksUsers;

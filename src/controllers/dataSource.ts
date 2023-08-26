@@ -5,8 +5,10 @@ import Author from "./AuthorController";
 import Book from "./BookController";
 import BooksAuthors from "./BookAuthorController";
 import BooksGenres from "./BookGenreController";
+import BooksLibrarians from "./BooksLibrarianController";
 import BooksUsers from "./BookUserController";
 import Genre from "./GenreController";
+import Librarian from "./LibControllers";
 import User from "./UserController";
 
 /**
@@ -19,8 +21,8 @@ const dataSource = new DataSource({
   username: process.env.USERNAME,
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
-  entities: [Author, Book, Genre,
-    User, BooksAuthors, BooksGenres,
+  entities: [Author, Book, Genre, Librarian,
+    User, BooksAuthors, BooksGenres, BooksLibrarians,
     BooksUsers
   ],
   synchronize: true
@@ -32,7 +34,7 @@ const dataSource = new DataSource({
 class DataClass {
 
   /**
-   * Initializes the database connection
+   * ### Initializes the database connection
    */
   static async load() {
     await dataSource.initialize()
@@ -45,14 +47,14 @@ class DataClass {
   }
 
   /**
-   * closes the database connection
+   * ### closes the database connection
    */
   static async close() {
     await dataSource.destroy();
   }
 
   /**
-   * get an author object from the database
+   * ### get an author object from the database
    * @param authorId author Id
    * @returns a Promise Author object or null
    */
@@ -74,7 +76,7 @@ class DataClass {
   }
 
   /**
-   * get a book from the database
+   * ### get a book from the database
    * @param bookId book Id
    * @returns a Promise Book object or null value
    */
@@ -85,7 +87,8 @@ class DataClass {
       relations: {
         booksToUsers: true,
         booksToAuthors: true,
-        booksToGenres: true
+        booksToGenres: true,
+        booksToLibrarians: true
       },
       where: {
         id: bookId
@@ -98,7 +101,7 @@ class DataClass {
   }
 
   /**
-   * 
+   * ### Gets a genre
    * @param userId user's Id
    * @returns a Promise User object or null
    */
@@ -119,9 +122,31 @@ class DataClass {
     return genre;
   }
 
+  /**
+   * ### Gets a librarian object
+   * @param librarianId 
+   * @returns a `Librarian` object
+   */
+  async getLibrarian(librarianId: string) {
+    const libRepo = dataSource.getRepository(Librarian);
+
+    const librarian = await libRepo.findOne({
+      where: {
+        id: librarianId
+      },
+      relations: {
+        booksToLibrarians: true
+      }
+    });
+    if (!librarian) {
+      return null;
+    }
+    return librarian;
+  }
+
 
   /**
-   * 
+   * ## gets a user
    * @param userId user's Id
    * @returns a Promise User object or null
    */
@@ -144,7 +169,7 @@ class DataClass {
 
 
   /**
-   * saves an author to the database
+   * ### saves an author to the database
    * @param author Author object
    */
   async saveAuthor(author: Author) {
@@ -158,7 +183,7 @@ class DataClass {
   }
 
   /**
-   * save a book to the database
+   * ### save a book to the database
    * @param book Book object
    */
   async saveBook(book: Book) {
@@ -171,6 +196,10 @@ class DataClass {
     await booksRepo.save(book);
   }
 
+  /**
+   * ### Saves a genre
+   * @param genre a `Genre` object
+   */
   async saveGenre(genre: Genre) {
 
     if (!genre) {
@@ -182,7 +211,21 @@ class DataClass {
   }
 
   /**
-   * saves a user object to the database
+   * ## saves a librarian to the database
+   * @param librarian `Librarian` object
+   */
+  async saveLibrarian(librarian: Librarian) {
+
+    if (!librarian) {
+      throw new Error('Object cannot be of null value');
+    }
+    const libRepo = dataSource.getRepository(Librarian);
+
+    await libRepo.save(librarian);
+  }
+
+  /**
+   * ## saves a user object to the database
    * @param user User object
    */
   async saveUser(user: User) {
@@ -197,7 +240,7 @@ class DataClass {
 
 
   /**
-   * connect a book to an author's object
+   * ## connect a book to an author's object
    * @param author author object
    * @param book Book object
    */
@@ -216,7 +259,7 @@ class DataClass {
   }
 
   /**
-   * connect a book to a user's object
+   * ## connect a book to a genre
    * @param user user object
    * @param book Book object 
    */
@@ -235,20 +278,27 @@ class DataClass {
   }
 
   /**
-   * connect a book to a user's object
-   * @param user user object
-   * @param book Book object 
+   * ### issue a book to a user/client
+   * @param user receiver of book
+   * @param book book to be issued
+   * @param issuer issuer of book
    */
-  async saveUserBooks(user: User, book: Book) {
+  async issueBooksToUser(user: User, book: Book, issuer: Librarian) {
 
-    if (!user || !book) {
+    if (!user || !book || !issuer) {
       throw new Error('Object cannot be of null value');
     }
     const booksUsersRepo = dataSource.getRepository(BooksUsers);
+    const booksLibrariansRepo = dataSource.getRepository(BooksLibrarians);
+
+    const newLibrarianBooks = new BooksLibrarians();
     const newUserBooks = new BooksUsers();
 
     [newUserBooks.user, newUserBooks.book] = [user, book];
+    [newLibrarianBooks.librarian, newLibrarianBooks.book] = [issuer, book];
+
     await booksUsersRepo.save(newUserBooks);
+    await booksLibrariansRepo.save(newLibrarianBooks);
 
     console.log('Books have been saved to user\'s collection!')
   }
