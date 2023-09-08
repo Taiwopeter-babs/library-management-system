@@ -10,7 +10,7 @@ import Librarian from '../../controllers/LibControllers';
 const router = express.Router();
 
 // endpoints
-router.get('/users', verifyAccessToken, User.getAllUsers)
-router.post('/librarians/login', verifyAccessToken,)
+router.get('/users', verifyAccessToken, User.getAllUsers);
+router.post('/librarians/login', verifyAccessToken, Librarian.loginLibrarian);
 
 export default router;
