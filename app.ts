@@ -1,6 +1,22 @@
-import DataClass from './src/models/database/dataSource';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import logger from 'morgan';
+import 'dotenv/config';
 
-const dataClass = new DataClass();
-dataClass.load();
+import indexRouter from './src/api/routes/index';
 
-export default dataClass;
+const app = express();
+
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+
+app.use('/api', indexRouter);
+
+const port = process.env.APP_PORT || 5000;
+app.listen(port, () => {
+  `Server is listening on port ${port}`
+});

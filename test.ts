@@ -1,35 +1,87 @@
-import Book from "./src/models/books";
-import User from "./src/models/users";
-import DataClass from './src/models/database/dataSource';
+// import DataClass from "./src/controllers/dataSource";
+// import Author from "./src/controllers/AuthorController";
+// import Genre from "./src/controllers/GenreController";
+// import Book from "./src/controllers/BookController";
+import Librarian from "./src/controllers/LibControllers";
+// import 'dotenv/config';
 
+(async function () {
+  const email = await Librarian.setUniqueEmail('taiwo');
+  console.log(email);
+})();
+// async function testSaveAuthors() {
 
+//   const dataClass = new DataClass();
+//   await DataClass.load();
 
+//   const librarian = new Librarian();
+//   librarian.name = 'Taiwo Babalola Peter';
+//   librarian.email = Librarian.setUniqueEmail(librarian.name);
+//   librarian.password = Librarian.generateRandom(10);
+//   await dataClass.saveLibrarian(librarian);
+//   console.log(librarian)
+//   console.log(librarian.email, librarian.password)
+//   await DataClass.close();
+// }
 
-async function testSaveUserBooks() {
+// testSaveAuthors();
 
-  const dataClass = new DataClass();
-  await dataClass.load();
-  console.log('done');
+// interface SetTestInterface {
+//   name: string,
+//   password: string
+// }
 
-  const book = new Book();
-  book.name = 'My Life Story';
-  book.quantity = 6;
-  await dataClass.saveBook(book)
+// class SetTest {
+//   _name: string;
+//   _email: string;
+//   _password: string;
 
-  const user = new User();
-  user.email = 'test2@email.com';
-  user.name = 'taiwo peter';
-  await dataClass.saveUser(user);
+//   constructor(props: SetTestInterface) {
+//     this._password = props.password;
+//     this._name = props.name
+//   }
 
-  await dataClass.saveUserBooks(user, book);
+//   get email() {
+//     return this._email
+//   }
 
-  const nUser = await dataClass.getUser(user.id);
-  if (!nUser) {
-    console.log('User does not exist')
-  } else {
-    console.log(nUser.id, nUser.booksToUsers);
-  }
-  return;
-}
+//   set email(value: string | null) {
+//     let nameForEmail;
+//     const nameM = this._name.trim().split(' ');
+//     if (nameM.length >= 2) {
+//       nameForEmail = nameM.splice(0, 2).join('_');
+//     } else {
+//       nameForEmail = nameM[0];
+//     }
+//     this._email = nameForEmail + '@lms.com'
+//   }
 
-testSaveUserBooks();
+//   generateRandom = () => {
+
+//     return new Promise((resolve, reject) => {
+//       let result = '';
+
+//       const chars = process.env.RANDOM_CHARACTERS;
+//       const charsLength = chars?.length;
+
+//       let count = 0;
+
+//       while (count < 10) {
+//         result += chars?.charAt(Math.floor(Math.random() * (charsLength ?? 10)));
+//         count += 1;
+//       }
+//       resolve(result);
+//     })
+//   }
+// }
+
+// // const prop = { name: ' taiwo peter ', password: 'password' }
+
+// // const set1 = new SetTest(prop);
+// // set1.email = 'tee';
+// // console.log(set1.email, set1._email);
+
+// // set1.generateRandom()
+// //   .then((res) => {
+// //     console.log(res);
+// //   })

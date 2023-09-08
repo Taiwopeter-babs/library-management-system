@@ -3,7 +3,11 @@ import { Column, Entity, OneToMany } from 'typeorm';
 
 import Base from './BaseController';
 import BooksLibrarians from './BooksLibrarianController';
+import { Request, Response } from 'express';
+import dataSource from '../utils/dataSource';
 
+import setUniqueEmail from '../utils/getLibrarianEmail';
+import { verifyPassword } from '../utils/hashVerifyPassword';
 
 
 /**
@@ -44,57 +48,29 @@ class Librarian extends Base {
   }
 
   /**
-   * hash user's password
+   * ### endpoint to login a librarian
+   * @param request
+   * @param response
+   * @returns Response
    */
-  hashPassword() {
-
-  }
-
-  /**
-   * verify user's password
-   */
-  verifyPassword() {
-
-  }
-
-  /**
-   * Generate email field. A unique email is assigned
-   * to each librarian with suffix - `@lms.com`
-   */
-  static setUniqueEmail(username: string): string {
-    let nameForEmail;
-
-    // remove leading and trailing whitespaces if any
-    const nameArray = username.trim().split(' ');
-
-    // first two names are chosen for the email, a single name works
-    if (nameArray.length >= 2) {
-      nameForEmail = nameArray.splice(0, 2).join('_');
-    } else {
-      nameForEmail = nameArray[0];
+  static async loginLibrarian(request: Request, response: Response) {
+    const { email, password } = request.body;
+    // verify librarian
+    const librarian = await dataSource.getLibrarian(email);
+    if (!librarian) {
+      return response.status(404).json({ error: 'Not found' });
     }
-    return `${nameForEmail.toLowerCase()}_${Librarian.generateRandom(3)}@lmsmail.com`;
-  }
-
-  /**
-   * Generates a unique login password for the user.
-   * @returns a unique password string
-   */
-  static generateRandom(numLength: number): string {
-
-    let result = '';
-
-    const chars = process.env.RANDOM_CHARACTERS;
-    const charsLength = chars?.length;
-
-    let count = 0;
-
-    while (count < numLength) {
-      result += chars?.charAt(Math.floor(Math.random() * (charsLength ?? 10)));
-      count += 1;
+    // verify password
+    const passwordVerified = await verifyPassword(password, librarian.password);
+    if (!passwordVerified) {
+      return response.status(400).json({ error: 'Wrong password' });
     }
-    return result;
+
+    return response.status(200).json({ id: librarian.id, message: 'Login successful' });
+
   }
+
+
 }
 
 export default Librarian;

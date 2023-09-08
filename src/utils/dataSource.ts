@@ -1,56 +1,56 @@
 import { DataSource } from "typeorm";
 import 'dotenv/config';
 
-import Author from "./AuthorController";
-import Book from "./BookController";
-import BooksAuthors from "./BookAuthorController";
-import BooksGenres from "./BookGenreController";
-import BooksLibrarians from "./BooksLibrarianController";
-import BooksUsers from "./BookUserController";
-import Genre from "./GenreController";
-import Librarian from "./LibControllers";
-import User from "./UserController";
+import Author from "../controllers/AuthorController";
+import Book from "../controllers/BookController";
+import BooksAuthors from '../controllers/BookAuthorController';
+import BooksGenres from "../controllers/BookGenreController";
+import BooksLibrarians from "../controllers/BooksLibrarianController";
+import BooksUsers from "../controllers/BookUserController";
+import Genre from "../controllers/GenreController";
+import Librarian from "../controllers/LibControllers";
+import User from "../controllers/UserController";
 
-/**
- * Sets up the database connection
- */
-const dataSource = new DataSource({
-  type: "mysql",
-  host: process.env.HOST,
-  port: parseInt(process.env.DB_PORT ?? '3306', 10),
-  username: process.env.USERNAME,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE,
-  entities: [Author, Book, Genre, Librarian,
-    User, BooksAuthors, BooksGenres, BooksLibrarians,
-    BooksUsers
-  ],
-  synchronize: true
-})
 
 /**
  * class to load database and control connections
  */
 class DataClass {
 
+  dataSource: DataSource
+
   /**
    * ### Initializes the database connection
    */
-  static async load() {
-    await dataSource.initialize()
+  constructor() {
+    this.dataSource = new DataSource({
+      type: "mysql",
+      host: process.env.HOST,
+      port: parseInt(process.env.DB_PORT ?? '3306', 10),
+      username: process.env.USERNAME,
+      password: process.env.PASSWORD,
+      database: process.env.DATABASE,
+      entities: [Author, Book, Genre, Librarian,
+        User, BooksAuthors, BooksGenres, BooksLibrarians,
+        BooksUsers
+      ],
+      synchronize: true
+    })
+    // initialize database connection
+    this.dataSource.initialize()
       .then(() => {
         console.log("Data Source has been initialized!");
       })
       .catch((err) => {
         console.error("Error during Data Source initialization", err);
-      })
+      });
   }
 
   /**
    * ### closes the database connection
    */
-  static async close() {
-    await dataSource.destroy();
+  async close() {
+    await this.dataSource.destroy();
   }
 
   /**
@@ -59,7 +59,7 @@ class DataClass {
    * @returns a Promise Author object or null
    */
   async getAuthor(authorId: string): Promise<Author | null> {
-    const authorsRepo = dataSource.getRepository(Author);
+    const authorsRepo = this.dataSource.getRepository(Author);
 
     const author = await authorsRepo.findOne({
       relations: {
@@ -81,7 +81,7 @@ class DataClass {
    * @returns a Promise Book object or null value
    */
   async getBook(bookId: string): Promise<Book | null> {
-    const booksRepo = dataSource.getRepository(Book);
+    const booksRepo = this.dataSource.getRepository(Book);
 
     const book = await booksRepo.findOne({
       relations: {
@@ -106,7 +106,7 @@ class DataClass {
    * @returns a Promise User object or null
    */
   async getGenre(genreId: string): Promise<Genre | null> {
-    const genresRepo = dataSource.getRepository(Genre);
+    const genresRepo = this.dataSource.getRepository(Genre);
 
     const genre = await genresRepo.findOne({
       relations: {
@@ -127,15 +127,15 @@ class DataClass {
    * @param librarianId 
    * @returns a `Librarian` object
    */
-  async getLibrarian(librarianId: string) {
-    const libRepo = dataSource.getRepository(Librarian);
+  async getLibrarian(librarianEmail: string, relation: boolean = false) {
+    const libRepo = this.dataSource.getRepository(Librarian);
 
     const librarian = await libRepo.findOne({
       where: {
-        id: librarianId
+        email: librarianEmail
       },
       relations: {
-        booksToLibrarians: true
+        booksToLibrarians: relation
       }
     });
     if (!librarian) {
@@ -148,14 +148,15 @@ class DataClass {
   /**
    * ## gets a user
    * @param userId user's Id
+   * @param relation load relation with books; default value is false
    * @returns a Promise User object or null
    */
-  async getUser(userId: string): Promise<User | null> {
-    const usersRepo = dataSource.getRepository(User);
+  async getUser(userId: string, relation: boolean = false): Promise<User | null> {
+    const usersRepo = this.dataSource.getRepository(User);
 
     const user = await usersRepo.findOne({
       relations: {
-        booksToUsers: true
+        booksToUsers: relation
       },
       where: {
         id: userId
@@ -165,6 +166,23 @@ class DataClass {
       return null;
     }
     return user;
+  }
+
+  /**
+   * ### get all users from the database
+   * @param relation a boolean to load users relations with books;
+   * default value is false
+   * @returns a Promise User array
+   */
+  async getAllUsers(relation: boolean = false): Promise<User[]> {
+    const usersRepo = this.dataSource.getRepository(User);
+
+    const users = await usersRepo.find({
+      relations: {
+        booksToUsers: relation,
+      },
+    });
+    return users;
   }
 
 
@@ -177,7 +195,7 @@ class DataClass {
     if (!author) {
       throw new Error('Object cannot be of null value');
     }
-    const authorsRepo = dataSource.getRepository(Author);
+    const authorsRepo = this.dataSource.getRepository(Author);
 
     await authorsRepo.save(author);
   }
@@ -191,7 +209,7 @@ class DataClass {
     if (!book) {
       throw new Error('Object cannot be of null value');
     }
-    const booksRepo = dataSource.getRepository(Book);
+    const booksRepo = this.dataSource.getRepository(Book);
 
     await booksRepo.save(book);
   }
@@ -205,7 +223,7 @@ class DataClass {
     if (!genre) {
       throw new Error('Object cannot be of null value');
     }
-    const genresRepo = dataSource.getRepository(Genre);
+    const genresRepo = this.dataSource.getRepository(Genre);
 
     await genresRepo.save(genre);
   }
@@ -219,7 +237,7 @@ class DataClass {
     if (!librarian) {
       throw new Error('Object cannot be of null value');
     }
-    const libRepo = dataSource.getRepository(Librarian);
+    const libRepo = this.dataSource.getRepository(Librarian);
 
     await libRepo.save(librarian);
   }
@@ -233,7 +251,7 @@ class DataClass {
     if (!user) {
       throw new Error('Object cannot be of null value');
     }
-    const usersRepo = dataSource.getRepository(User);
+    const usersRepo = this.dataSource.getRepository(User);
 
     await usersRepo.save(user);
   }
@@ -249,7 +267,7 @@ class DataClass {
     if (!author || !book) {
       throw new Error('Object cannot be of null value');
     }
-    const booksAuthorsRepo = dataSource.getRepository(BooksAuthors);
+    const booksAuthorsRepo = this.dataSource.getRepository(BooksAuthors);
     const newAuthorBooks = new BooksAuthors();
 
     [newAuthorBooks.author, newAuthorBooks.book] = [author, book];
@@ -268,7 +286,7 @@ class DataClass {
     if (!genre || !book) {
       throw new Error('Object cannot be of null value');
     }
-    const booksGenresRepo = dataSource.getRepository(BooksGenres);
+    const booksGenresRepo = this.dataSource.getRepository(BooksGenres);
     const newGenreBooks = new BooksGenres();
 
     [newGenreBooks.genre, newGenreBooks.book] = [genre, book];
@@ -288,8 +306,8 @@ class DataClass {
     if (!user || !book || !issuer) {
       throw new Error('Object cannot be of null value');
     }
-    const booksUsersRepo = dataSource.getRepository(BooksUsers);
-    const booksLibrariansRepo = dataSource.getRepository(BooksLibrarians);
+    const booksUsersRepo = this.dataSource.getRepository(BooksUsers);
+    const booksLibrariansRepo = this.dataSource.getRepository(BooksLibrarians);
 
     const newLibrarianBooks = new BooksLibrarians();
     const newUserBooks = new BooksUsers();
@@ -304,5 +322,6 @@ class DataClass {
   }
 }
 
+const dataSource = new DataClass();
 
-export default DataClass;
+export default dataSource;
