@@ -5,10 +5,12 @@
 import Librarian from "./src/controllers/LibControllers";
 // import 'dotenv/config';
 
-(async function () {
-  const email = await Librarian.setUniqueEmail('taiwo');
-  console.log(email);
-})();
+// (async function () {
+//   const email = await Librarian.setUniqueEmail('taiwo');
+//   console.log(email);
+// })();
+const lib = new Librarian();
+lib.createNewLibrarian()
 // async function testSaveAuthors() {
 
 //   const dataClass = new DataClass();

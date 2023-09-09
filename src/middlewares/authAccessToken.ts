@@ -6,13 +6,16 @@ import { Secret } from 'jsonwebtoken';
 import redisClient from '../utils/redis';
 import dataSource from '../utils/dataSource';
 
-// create json web token
-// cache in redis with auth_<librarianId> for 5 days and send
-// access token in a secure http only cookie
+/** create json web token
+ * cache in redis with auth_<librarianId> for 5 days and send
+ * access token in a secure http only cookie
+ * whenever a librarian requests access to a protected route,
+ * verify the jwt and check the cache if the token still exists
+ */
 
-// whenever a librarian requests access to a protected route,
-// verify the jwt and check the cache if the token still exists
+
 const secretKey: Secret | string = process.env.JWT ?? 'secret';
+
 /**
  * creates and caches the access token for a librarian
  * @param librarianId id of librarian
@@ -20,7 +23,10 @@ const secretKey: Secret | string = process.env.JWT ?? 'secret';
  */
 export function createAccessToken(librarianEmail: string) {
   return new Promise((resolve, reject) => {
-    // options for creating token - userId is the audience
+    /**
+     * options for creating token:
+     * LibrarianEmail is the audience - will be used during verification
+     */
     const options = {
       expiresIn: '5 days',
       audience: librarianEmail
@@ -31,7 +37,7 @@ export function createAccessToken(librarianEmail: string) {
         reject(error);
       }
       // cache token for five days in redis using librarianId
-      const key = `auth_${librarianEmail}`
+      const key = `auth_${librarianEmail}`;
       await redisClient.set(key, accessToken, 432000);
       // token will be set in cookie
       resolve(accessToken);
@@ -67,13 +73,16 @@ const decodeAccessToken = (accessToken: string) => {
 export async function verifyAccessToken(request: Request, response: Response, next: NextFunction) {
   // get access token from request cookie
   const accessToken: string = request.cookies.accessToken;
+  if (!accessToken) {
+    return response.status(401).json({ error: 'Unauthorized' });
+  }
 
   // verify access token
   try {
 
     const decodedToken: any = await decodeAccessToken(accessToken);
     const librarianEmail = decodedToken.librarianEmail;
-    // get accessToken from cache, if not expired:
+    // get accessToken from cache, if not expired;
     // authentication is repeated here but required for better security
     const cachedaccessToken = await redisClient.get(`auth_${librarianEmail}`);
     if (!cachedaccessToken) {

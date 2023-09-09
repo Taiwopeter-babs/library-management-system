@@ -11,6 +11,7 @@ const router = express.Router();
 
 // endpoints
 router.get('/users', verifyAccessToken, User.getAllUsers);
-router.post('/librarians/login', verifyAccessToken, Librarian.loginLibrarian);
+router.post('/librarians/login', Librarian.loginLibrarian);
+router.post('/librarians', Librarian.postNewLibrarian);
 
 export default router;

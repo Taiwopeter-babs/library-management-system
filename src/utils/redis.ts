@@ -9,17 +9,21 @@ class RedisClient {
   constructor() {
     this.redisClient = createClient();
     this.redisClient.on('connect', () => {
-      console.log('connected to redis server')
+      console.log('connected to redis server');
     }).on('error', (error) => {
-      console.log('Connetion to redis failed', error);
+      console.log('Connection to redis failed', error);
     });
+  }
+
+  async connectToRedis() {
+    await this.redisClient.connect();
   }
 
   /**
    * ### get the value of a key from redis
    */
   async get(key: string) {
-    const value = this.redisClient.get(key);
+    const value = await this.redisClient.get(key);
     return value;
   }
 

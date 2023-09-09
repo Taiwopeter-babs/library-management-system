@@ -3,7 +3,8 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import 'dotenv/config';
 
-import indexRouter from './src/api/routes/index';
+import indexRouter from './api/routes/index';
+import redisClient from './utils/redis';
 
 const app = express();
 
@@ -16,7 +17,9 @@ app.use(cookieParser());
 
 app.use('/api', indexRouter);
 
-const port = process.env.APP_PORT || 5000;
-app.listen(port, () => {
-  `Server is listening on port ${port}`
+const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 5000;
+app.listen(port, async () => {
+  // connect to redis
+  await redisClient.connectToRedis()
+  console.log(`Server is listening on port ${port}`);
 });

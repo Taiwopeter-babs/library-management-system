@@ -20,7 +20,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 /**
  * ### hashes a user password
  */
-export async function hashPassword(password: string) {
+export async function hashPassword(password: string): Promise<string> {
   // salt rounds to hash password with
   const saltRounds = 10;
 

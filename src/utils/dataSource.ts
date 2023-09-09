@@ -132,7 +132,7 @@ class DataClass {
 
     const librarian = await libRepo.findOne({
       where: {
-        email: librarianEmail
+        org_email: librarianEmail
       },
       relations: {
         booksToLibrarians: relation
