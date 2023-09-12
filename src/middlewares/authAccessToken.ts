@@ -21,23 +21,23 @@ const secretKey: Secret | string = process.env.JWT ?? 'secret';
  * @param librarianId id of librarian
  * @returns a promise
  */
-export function createAccessToken(librarianEmail: string) {
+export function createAccessToken(librarianOrgEmail: string) {
   return new Promise((resolve, reject) => {
     /**
      * options for creating token:
-     * LibrarianEmail is the audience - will be used during verification
+     * LibrarianOrgEmail is the audience - will be used during verification
      */
     const options = {
       expiresIn: '5 days',
-      audience: librarianEmail
+      audience: librarianOrgEmail
     }
     // create web token
-    jwt.sign({ librarianEmail }, secretKey, options, async (error, accessToken) => {
+    jwt.sign({ librarianOrgEmail }, secretKey, options, async (error, accessToken) => {
       if (error) {
         reject(error);
       }
       // cache token for five days in redis using librarianId
-      const key = `auth_${librarianEmail}`;
+      const key = `auth_${librarianOrgEmail}`;
       await redisClient.set(key, accessToken, 432000);
       // token will be set in cookie
       resolve(accessToken);
@@ -72,7 +72,7 @@ const decodeAccessToken = (accessToken: string) => {
  */
 export async function verifyAccessToken(request: Request, response: Response, next: NextFunction) {
   // get access token from request cookie
-  const accessToken: string = request.cookies.accessToken;
+  const accessToken: string = request.cookies.rememberUser;
   if (!accessToken) {
     return response.status(401).json({ error: 'Unauthorized' });
   }
@@ -81,20 +81,22 @@ export async function verifyAccessToken(request: Request, response: Response, ne
   try {
 
     const decodedToken: any = await decodeAccessToken(accessToken);
-    const librarianEmail = decodedToken.librarianEmail;
+    const librarianOrgEmail = decodedToken.librarianOrgEmail;
     // get accessToken from cache, if not expired;
     // authentication is repeated here but required for better security
-    const cachedaccessToken = await redisClient.get(`auth_${librarianEmail}`);
+    const cachedaccessToken = await redisClient.get(`auth_${librarianOrgEmail}`);
     if (!cachedaccessToken) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     // verify user
     // verify user
-    const librarian = await dataSource.getLibrarian(librarianEmail, false);
+    const librarian = await dataSource.getLibrarian(librarianOrgEmail, false);
     if (!librarian) {
-      return response.status(404).json({ error: 'Not found' });
+      return response.status(401).json({ error: 'Unauthorized' });
     }
-    return next();
+    // pass librarian org_email to next function
+    response.locals.librarianOrgEmail = librarianOrgEmail;
+    next();
 
   } catch (error) {
     // Unauthorized access

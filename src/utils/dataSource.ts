@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource, Like } from "typeorm";
 import 'dotenv/config';
 
 import Author from "../controllers/AuthorController";
@@ -58,12 +58,12 @@ class DataClass {
    * @param authorId author Id
    * @returns a Promise Author object or null
    */
-  async getAuthor(authorId: string): Promise<Author | null> {
+  async getAuthor(authorId: string, relation: boolean = false): Promise<Author | null> {
     const authorsRepo = this.dataSource.getRepository(Author);
 
     const author = await authorsRepo.findOne({
       relations: {
-        booksToAuthors: true
+        booksToAuthors: relation
       },
       where: {
         id: authorId
@@ -73,6 +73,55 @@ class DataClass {
       return null;
     }
     return author;
+  }
+  /**
+   * ### get an author object by name from the database
+   * @param authorId author Id
+   * @returns a Promise Author object or null
+   */
+  async getAuthorByName(authorName: string, relation: boolean = false): Promise<Author | null> {
+    const authorsRepo = this.dataSource.getRepository(Author);
+
+    const author = await authorsRepo.findOne({
+      select: {
+        id: true
+      },
+      where: {
+        name: Like(`${authorName}%`),
+      },
+      relations: {
+        booksToAuthors: relation
+      }
+    });
+    return author;
+  }
+
+  async getBookByName(bookName: string, relation: boolean = false): Promise<Book | null> {
+    const booksRepo = this.dataSource.getRepository(Book);
+
+    const book = await booksRepo.findOne({
+      select: {
+        id: true
+      },
+      where: {
+        name: Like(`${bookName}%`),
+      }
+    });
+    return book;
+  }
+
+  async getGenreByName(genreName: string, relation: boolean = false): Promise<Genre | null> {
+    const genresRepo = this.dataSource.getRepository(Genre);
+
+    const genre = await genresRepo.findOne({
+      select: {
+        id: true
+      },
+      where: {
+        name: Like(`${genreName}%`),
+      }
+    });
+    return genre;
   }
 
   /**
@@ -197,7 +246,8 @@ class DataClass {
     }
     const authorsRepo = this.dataSource.getRepository(Author);
 
-    await authorsRepo.save(author);
+    const saved = await authorsRepo.save(author);
+    return saved;
   }
 
   /**
@@ -209,9 +259,13 @@ class DataClass {
     if (!book) {
       throw new Error('Object cannot be of null value');
     }
-    const booksRepo = this.dataSource.getRepository(Book);
-
-    await booksRepo.save(book);
+    try {
+      const booksRepo = this.dataSource.getRepository(Book);
+      const savedBook = await booksRepo.save(book);
+      return savedBook;
+    } catch (error) {
+      return null;
+    }
   }
 
   /**
@@ -225,7 +279,8 @@ class DataClass {
     }
     const genresRepo = this.dataSource.getRepository(Genre);
 
-    await genresRepo.save(genre);
+    const savedGenre = await genresRepo.save(genre);
+    return savedGenre;
   }
 
   /**
@@ -267,13 +322,16 @@ class DataClass {
     if (!author || !book) {
       throw new Error('Object cannot be of null value');
     }
-    const booksAuthorsRepo = this.dataSource.getRepository(BooksAuthors);
-    const newAuthorBooks = new BooksAuthors();
+    try {
+      const booksAuthorsRepo = this.dataSource.getRepository(BooksAuthors);
+      const newAuthorBooks = new BooksAuthors();
 
-    [newAuthorBooks.author, newAuthorBooks.book] = [author, book];
-    await booksAuthorsRepo.save(newAuthorBooks);
-
-    console.log('Books have been saved to author\'s collection!')
+      [newAuthorBooks.author, newAuthorBooks.book] = [author, book];
+      await booksAuthorsRepo.save(newAuthorBooks);
+      return true;
+    } catch (error) {
+      throw new Error('Cannot link author with book');
+    }
   }
 
   /**
@@ -291,8 +349,6 @@ class DataClass {
 
     [newGenreBooks.genre, newGenreBooks.book] = [genre, book];
     await booksGenresRepo.save(newGenreBooks);
-
-    console.log('Books have been saved to genre\'s collection!')
   }
 
   /**

@@ -36,6 +36,13 @@ class RedisClient {
       NX: true,
     });
   }
+
+  /**
+  * ### deletes a key in redis
+  */
+  async deleteKey(key: string) {
+    await this.redisClient.del(key)
+  }
 }
 
 const redisClient = new RedisClient();

@@ -2,7 +2,7 @@
 import 'dotenv/config';
 import { Column, Entity, OneToMany } from 'typeorm';
 
-import NewLibrarian from '../utils/interface';
+import { NewLibrarian } from '../utils/interface';
 import Base from './BaseController';
 import BooksLibrarians from './BooksLibrarianController';
 import { Request, Response } from 'express';
@@ -11,7 +11,8 @@ import dataSource from '../utils/dataSource';
 import { setUniqueEmail, setUnqiuePassword } from '../utils/getLibrarianEmail';
 import { createAccessToken } from '../middlewares/authAccessToken';
 import { verifyPassword } from '../utils/hashVerifyPassword';
-import createNewLibrarian from '../utils/saveObjects';
+import { createNewLibrarian } from '../utils/saveObjects';
+import redisClient from '../utils/redis';
 
 
 /**
@@ -125,7 +126,26 @@ class Librarian extends Base {
     // set access token in cookies; maxAge is 5 days
     response.cookie('rememberUser', accessToken, { httpOnly: true, maxAge: 432000 * 1000 });
 
-    return response.status(200).json({ id: librarian.id, message: 'Login successful' });
+    return response.status(200).json({ org_email, message: 'Login successful' });
+  }
+
+
+  /**
+     * ### endpoint to logout a librarian
+     * @param request
+     * @param response
+     * @returns Response
+     */
+  static async logoutLibrarian(request: Request, response: Response) {
+
+    // clear cookie in response
+    response.clearCookie('rememberUser');
+    // get librarian org_email from middleware
+    const librarianOrgEmail = response.locals.librarianOrgEmail;
+    // delete access token from redis
+    await redisClient.deleteKey(`auth_${librarianOrgEmail}`);
+
+    return response.status(204).json({ message: 'Logout successful' });
   }
 }
 

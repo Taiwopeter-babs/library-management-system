@@ -1,11 +1,12 @@
 /// <reference path='./lms.d.ts' />
-import NewLibrarian from "./interface";
+import { NewLibrarian, NewBook } from "./interface";
 
+import Book from "../controllers/BookController";
 import Librarian from "../controllers/LibControllers";
 import dataSource from "./dataSource";
 import { hashPassword } from "./hashVerifyPassword";
 
-export default async function createNewLibrarian(librarianObj: NewLibrarian): Promise<boolean> {
+export async function createNewLibrarian(librarianObj: NewLibrarian): Promise<boolean> {
   try {
     const { name, email, org_email, password } = librarianObj;
     const librarian = new Librarian();
@@ -18,4 +19,15 @@ export default async function createNewLibrarian(librarianObj: NewLibrarian): Pr
   } catch (error) {
     return false;
   }
+}
+
+export async function createNewBook(bookObj: NewBook) {
+
+  const { name, quantity, publisher } = bookObj;
+  const book = new Book();
+  book.name = name;
+  book.quantity = quantity;
+  book.publisher = publisher;
+  const savedBook = await dataSource.saveBook(book);
+  return savedBook;
 }

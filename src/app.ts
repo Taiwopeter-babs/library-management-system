@@ -21,5 +21,5 @@ const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 5000;
 app.listen(port, async () => {
   // connect to redis
   await redisClient.connectToRedis()
-  console.log(`Server is listening on port ${port}`);
+  console.log(`Express Server is listening on port ${port}`);
 });
