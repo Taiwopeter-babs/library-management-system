@@ -10,6 +10,8 @@ import BooksLibrarians from './BooksLibrarianController';
 import BooksUsers from './BookUserController';
 
 import { createNewBook } from '../utils/saveObjects';
+import { BookInterface, UserInterface } from '../utils/interface';
+import dataSource from '../utils/dataSource';
 // background jobs
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../processJobs';
 
@@ -105,6 +107,29 @@ class Book extends Base {
       }
     }
     return response.status(201).json({ bookName: savedBook.name, message: 'Book added' });
+  }
+
+  /**
+   * ### Get all books from the database
+   * @param request
+   * @param response
+   * @returns 
+   */
+  static async getAllBooks(request: Request, response: Response) {
+    // get page number
+    const { pageNum } = request.query;
+    const books = await dataSource.getAllBooks(true);
+    const allBooks: Array<BookInterface> = books?.map((book) => {
+      let bookObj: BookInterface = {
+        name: book.name,
+        id: book.id,
+        quantity: book.quantity,
+        users: book.booksToUsers?.length ? book.booksToUsers.map((user) => user.userId) : [],
+        createdAt: book.createdAt
+      };
+      return bookObj;
+    });
+    return response.status(200).json(allBooks);
   }
 }
 
