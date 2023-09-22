@@ -46,11 +46,12 @@ export async function setUniqueEmail(name: string): Promise<string> {
   });
 }
 
+type uniqueReturn = ReturnType<typeof generateRandom>;
 /**
  * ### sets a unique password for the librarian
  * @returns a string
  */
-export async function setUnqiuePassword() {
+export async function setUnqiuePassword(): uniqueReturn {
   const userPassword = await generateRandom(12);
   return userPassword;
 }
