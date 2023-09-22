@@ -55,7 +55,7 @@ authorsQueue.process((job, done) => {
       if (!author) {
         const newAuthor = new Author();
         newAuthor.name = job.data.authorName;
-        const savedAuthor = await dataSource.saveAuthor(newAuthor);
+        const savedAuthor = await dataSource.saveEntity(newAuthor);
         // link aauthor with book
         dataSource.saveAuthorBooks(savedAuthor, job.data.book)
           .then((result) => {
@@ -94,8 +94,8 @@ genresQueue.process((job, done) => {
       if (!genre) {
         const newGenre = new Genre();
         newGenre.name = job.data.genreName;
-        const savedGenre = await dataSource.saveGenre(newGenre);
-        // link aauthor with book
+        const savedGenre = await dataSource.saveEntity(newGenre);
+        // link author with book
         dataSource.saveGenreBooks(savedGenre, job.data.book)
           .then(() => {
             job.progress(100);

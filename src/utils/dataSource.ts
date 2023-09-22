@@ -350,8 +350,9 @@ class DataClass {
     [newUserBooks.user, newUserBooks.book] = [user, book];
     [newLibrarianBooks.librarian, newLibrarianBooks.book] = [issuer, book];
 
-    await booksUsersRepo.save(newUserBooks);
-    await booksLibrariansRepo.save(newLibrarianBooks);
+    await Promise.allSettled([
+      booksUsersRepo.save(newUserBooks), booksLibrariansRepo.save(newLibrarianBooks)
+    ]);
   }
 
   async updateEntity<EntityType>(entity: EntityType, objToUpdate: EntityInterface) {

@@ -130,7 +130,7 @@ class User extends Base {
     const libOrgEmail: string = response.locals.librarianOrgEmail;
 
     const [userObj, bookObj, librarian] = await Promise.all([
-      dataSource.getUser(userId), dataSource.getBook(bookId), dataSource.getLibrarian(libOrgEmail)
+      dataSource.getUser(userId, true), dataSource.getBook(bookId), dataSource.getLibrarian(libOrgEmail)
     ]);
 
     // VERIFY USER, BOOK AND LIBRARIAN
@@ -148,9 +148,10 @@ class User extends Base {
       return response.status(404).json({ error: 'Librarian not found' });
     }
     // check if book is in user's collection
-    const userBookIndex = userObj.booksToUsers.map((book) => book.bookId).indexOf(bookObj.id)
-    if (userBookIndex > 0) {
-      return response.status(204).json({ userId, bookId, message: 'Book already issued' });
+    const userBookIndex = userObj.booksToUsers?.map((book) => book.bookId).indexOf(bookObj.id);
+    console.log(userBookIndex)
+    if (userBookIndex !== -1) {
+      return response.status(200).json({ userId, bookId, message: 'Book already issued' });
     }
 
     // issue book to user and update quantity
@@ -163,30 +164,40 @@ class User extends Base {
       [dataSource.issueBooksToUser(userObj, bookObj, librarian),
       dataSource.updateEntity(bookObj, bookInfoToUpdate)
       ]).then((results) => {
+        let hasError = false; // flag to track errors
+
         results.forEach((res) => {
+          console.log(res.status);
           if (res.status !== 'fulfilled') {
-            return response.status(400).json(
-              {
-                error: 'Could not add book to user',
-                borrowerId: userId,
-                bookId
-              });
+            hasError = true;
           }
         });
 
-        // Return object definition
-        const toReturn = {
-          bookId,
-          bookName: bookObj.name,
-          bookQuantity: bookInfoToUpdate.quantity,
-          borrowerId: userId,
-          issuerId: librarian.id,
+        if (hasError) {
+          return response.status(400).json(
+            {
+              error: 'Could not add book to user',
+              borrowerId: userId,
+              bookId
+            }
+          );
+        } else {
+          // Return object definition
+          const toReturn = {
+            bookId,
+            bookName: bookObj.name,
+            bookQuantity: bookInfoToUpdate.quantity,
+            borrowerId: userId,
+            issuerId: librarian.id,
+          }
+          return response.status(200).json(toReturn);
         }
-        return response.status(200).json(toReturn);
+
       }).catch((error) => {
-        return response.status(400).json(
+        console.error(error);
+        response.status(500).json(
           {
-            error: 'Could not add book to user',
+            error: 'Internal Server Error',
             borrowerId: userId,
             bookId
           });
