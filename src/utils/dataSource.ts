@@ -1,4 +1,4 @@
-import { DataSource, Like } from "typeorm";
+import { DataSource, Like, UpdateResult } from "typeorm";
 import 'dotenv/config';
 
 import Author from "../controllers/AuthorController";
@@ -10,6 +10,7 @@ import BooksUsers from "../controllers/BookUserController";
 import Genre from "../controllers/GenreController";
 import Librarian from "../controllers/LibControllers";
 import User from "../controllers/UserController";
+import { EntityInterface, EntityType } from "./interface";
 
 
 /**
@@ -129,15 +130,15 @@ class DataClass {
    * @param bookId book Id
    * @returns a Promise Book object or null value
    */
-  async getBook(bookId: string): Promise<Book | null> {
+  async getBook(bookId: string, relation: boolean = false): Promise<Book | null> {
     const booksRepo = this.dataSource.getRepository(Book);
 
     const book = await booksRepo.findOne({
       relations: {
-        booksToUsers: true,
-        booksToAuthors: true,
-        booksToGenres: true,
-        booksToLibrarians: true
+        booksToUsers: relation,
+        booksToAuthors: relation,
+        booksToGenres: relation,
+        booksToLibrarians: relation
       },
       where: {
         id: bookId
@@ -218,8 +219,48 @@ class DataClass {
   }
 
   /**
-   * ### get all users from the database
-   * @param relation a boolean to load users relations with books;
+   * ## gets a user
+   * @param userEmail user's email
+   * @param relation load relation with books; default value is false
+   * @returns a Promise User object or null
+   */
+  async getUserByEmail(userEmail: string, relation: boolean = false): Promise<User | null> {
+    const usersRepo = this.dataSource.getRepository(User);
+
+    const user = await usersRepo.findOne({
+      relations: {
+        booksToUsers: relation
+      },
+      where: {
+        email: userEmail
+      }
+    });
+    if (!user) {
+      return null;
+    }
+    return user;
+  }
+
+  /**
+   * ### get all books from the database, paginated by 25 books per page
+   * @param relation a boolean to load users relations with books:
+   * - default value is false
+   * @returns a Promise User array
+   */
+  async getAllBooks(relation: boolean = false): Promise<Book[]> {
+    const booksRepo = this.dataSource.getRepository(Book);
+
+    const books = await booksRepo.find({
+      relations: {
+        booksToUsers: relation,
+      },
+    });
+    return books;
+  }
+
+  /**
+   * ### get all books from the database
+   * @param relation a boolean to load books relations with books;
    * default value is false
    * @returns a Promise User array
    */
@@ -234,81 +275,19 @@ class DataClass {
     return users;
   }
 
-
   /**
-   * ### saves an author to the database
-   * @param author Author object
+   * ### saves an entity of types `Author, User, Books, Genre, Librarian`
+   * @param entity entity object to be saved to the database
+   * @returns the saved entity
    */
-  async saveAuthor(author: Author) {
-
-    if (!author) {
-      throw new Error('Object cannot be of null value');
+  async saveEntity<EntityType>(entity: EntityType): Promise<EntityType> {
+    if (!entity) {
+      throw new Error('Object cannot be null');
     }
-    const authorsRepo = this.dataSource.getRepository(Author);
+    const entityRepo = this.dataSource.getRepository(typeof entity);
+    const savedEntity = await entityRepo.save(entity);
 
-    const saved = await authorsRepo.save(author);
-    return saved;
-  }
-
-  /**
-   * ### save a book to the database
-   * @param book Book object
-   */
-  async saveBook(book: Book) {
-
-    if (!book) {
-      throw new Error('Object cannot be of null value');
-    }
-    try {
-      const booksRepo = this.dataSource.getRepository(Book);
-      const savedBook = await booksRepo.save(book);
-      return savedBook;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  /**
-   * ### Saves a genre
-   * @param genre a `Genre` object
-   */
-  async saveGenre(genre: Genre) {
-
-    if (!genre) {
-      throw new Error('Object cannot be of null value');
-    }
-    const genresRepo = this.dataSource.getRepository(Genre);
-
-    const savedGenre = await genresRepo.save(genre);
-    return savedGenre;
-  }
-
-  /**
-   * ## saves a librarian to the database
-   * @param librarian `Librarian` object
-   */
-  async saveLibrarian(librarian: Librarian) {
-
-    if (!librarian) {
-      throw new Error('Object cannot be of null value');
-    }
-    const libRepo = this.dataSource.getRepository(Librarian);
-
-    await libRepo.save(librarian);
-  }
-
-  /**
-   * ## saves a user object to the database
-   * @param user User object
-   */
-  async saveUser(user: User) {
-
-    if (!user) {
-      throw new Error('Object cannot be of null value');
-    }
-    const usersRepo = this.dataSource.getRepository(User);
-
-    await usersRepo.save(user);
+    return savedEntity;
   }
 
 
@@ -373,8 +352,20 @@ class DataClass {
 
     await booksUsersRepo.save(newUserBooks);
     await booksLibrariansRepo.save(newLibrarianBooks);
+  }
 
-    console.log('Books have been saved to user\'s collection!')
+  async updateEntity<EntityType>(entity: EntityType, objToUpdate: EntityInterface) {
+    try {
+      await this.dataSource
+        .createQueryBuilder()
+        .update(typeof entity)
+        .set({ ...objToUpdate })
+        .where("id = :id", { id: objToUpdate.id })
+        .execute();
+    } catch (error) {
+      throw new Error('Could not Update book');
+    }
+
   }
 }
 
