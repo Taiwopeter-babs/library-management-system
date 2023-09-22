@@ -1,1 +1,1 @@
-import NewLibrarian from "./interface";
+import { NewLibrarian } from "./interface";
