@@ -1,30 +1,4 @@
-// import DataClass from "./src/controllers/dataSource";
-// import Author from "./src/controllers/AuthorController";
-// import Genre from "./src/controllers/GenreController";
-// import Book from "./src/controllers/BookController";
-import Librarian from "./src/controllers/LibControllers";
-// import 'dotenv/config';
 
-// (async function () {
-//   const email = await Librarian.setUniqueEmail('taiwo');
-//   console.log(email);
-// })();
-const lib = new Librarian();
-lib.createNewLibrarian()
-// async function testSaveAuthors() {
-
-//   const dataClass = new DataClass();
-//   await DataClass.load();
-
-//   const librarian = new Librarian();
-//   librarian.name = 'Taiwo Babalola Peter';
-//   librarian.email = Librarian.setUniqueEmail(librarian.name);
-//   librarian.password = Librarian.generateRandom(10);
-//   await dataClass.saveLibrarian(librarian);
-//   console.log(librarian)
-//   console.log(librarian.email, librarian.password)
-//   await DataClass.close();
-// }
 
 // testSaveAuthors();
 
@@ -87,3 +61,5 @@ lib.createNewLibrarian()
 // //   .then((res) => {
 // //     console.log(res);
 // //   })
+const today = new Date();
+console.log(today);

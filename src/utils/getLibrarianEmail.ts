@@ -52,6 +52,6 @@ type uniqueReturn = ReturnType<typeof generateRandom>;
  * @returns a string
  */
 export async function setUnqiuePassword(): uniqueReturn {
-  const userPassword = await generateRandom(12);
+  const userPassword: Awaited<uniqueReturn> = await generateRandom(12);
   return userPassword;
 }

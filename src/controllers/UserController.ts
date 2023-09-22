@@ -156,7 +156,7 @@ class User extends Base {
     // issue book to user and update quantity
     const bookInfoToUpdate: EntityInterface = {
       id: bookObj.id, updatedAt: new Date(), quantity: bookObj.quantity - 1
-    }
+    };
 
     // ensures that books are issued and book info is updated
     Promise.allSettled(
