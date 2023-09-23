@@ -14,6 +14,7 @@ import { BookInterface, UserInterface } from '../utils/interface';
 import dataSource from '../utils/dataSource';
 // background jobs
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../processJobs';
+import { skipItemsForPage } from '../utils/pagination';
 
 
 /**
@@ -116,9 +117,10 @@ class Book extends Base {
    * @returns 
    */
   static async getAllBooks(request: Request, response: Response) {
-    // get page number
-    const { pageNum } = request.query;
-    const books = await dataSource.getAllBooks(true);
+    // get number of items to skip
+    const toSkipForPage = skipItemsForPage(request);
+
+    const books = await dataSource.getAllBooks(true, toSkipForPage);
     const allBooks: Array<BookInterface> = books?.map((book) => {
       let bookObj: BookInterface = {
         name: book.name,
