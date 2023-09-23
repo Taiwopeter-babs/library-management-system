@@ -57,3 +57,7 @@ export interface EntityInterface {
 }
 
 export type EntityType = Author | Book | Genre | Librarian | User;
+
+export const entityConstructors: Record<string, new () => EntityType> = {
+  Author, Book, Genre, Librarian, User
+}
