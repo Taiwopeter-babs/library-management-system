@@ -10,8 +10,7 @@ import BooksUsers from "../controllers/BookUserController";
 import Genre from "../controllers/GenreController";
 import Librarian from "../controllers/LibControllers";
 import User from "../controllers/UserController";
-import { EntityInterface, EntityType } from "./interface";
-
+import { EntityInterface, EntityType, entityConstructors } from "./interface";
 
 /**
  * class to load database and control connections
@@ -247,30 +246,35 @@ class DataClass {
    * - default value is false
    * @returns a Promise User array
    */
-  async getAllBooks(relation: boolean = false): Promise<Book[]> {
+  async getAllBooks(relation: boolean = false, toSkipForPage: number): Promise<Book[]> {
     const booksRepo = this.dataSource.getRepository(Book);
 
     const books = await booksRepo.find({
       relations: {
         booksToUsers: relation,
       },
+      skip: toSkipForPage,
+      take: 25
     });
     return books;
   }
 
   /**
-   * ### get all books from the database
+   * ### get all users from the database
    * @param relation a boolean to load books relations with books;
    * default value is false
    * @returns a Promise User array
    */
-  async getAllUsers(relation: boolean = false): Promise<User[]> {
+  async getAllUsers(relation: boolean = false, toSkipForPage: number): Promise<User[]> {
     const usersRepo = this.dataSource.getRepository(User);
 
+    // paginate by 25 items
     const users = await usersRepo.find({
       relations: {
         booksToUsers: relation,
       },
+      skip: toSkipForPage,
+      take: 25
     });
     return users;
   }
@@ -355,15 +359,18 @@ class DataClass {
     ]);
   }
 
-  async updateEntity<EntityType>(entity: EntityType, objToUpdate: EntityInterface) {
+  async updateEntity<EntityType>(entity: EntityType, entityName: string, toUpdate: EntityInterface) {
+    const { id, ...dataToUpdate } = toUpdate;
+    const EntityTypeCon = entityConstructors[entityName]
     try {
       await this.dataSource
         .createQueryBuilder()
-        .update(typeof entity)
-        .set({ ...objToUpdate })
-        .where("id = :id", { id: objToUpdate.id })
+        .update(EntityTypeCon)
+        .set({ ...dataToUpdate })
+        .where("id = :id", { id })
         .execute();
     } catch (error) {
+      console.error(error);
       throw new Error('Could not Update book');
     }
 
