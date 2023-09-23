@@ -7,6 +7,7 @@ import dataSource from '../utils/dataSource';
 
 import { createNewUser } from '../utils/saveObjects';
 import { EntityInterface, UserInterface } from '../utils/interface';
+import { skipItemsForPage } from '../utils/pagination';
 
 
 /**
@@ -40,7 +41,10 @@ class User extends Base {
    * @param response response object
    */
   static async getAllUsers(request: Request, response: Response): Promise<Response> {
-    const users = await dataSource.getAllUsers(true);
+
+    const toSkipForPage = skipItemsForPage(request);
+
+    const users = await dataSource.getAllUsers(true, toSkipForPage);
     const allUsers: Array<UserInterface> = users?.map((user) => {
       let userObj: UserInterface = {
         name: user.name,
@@ -162,7 +166,7 @@ class User extends Base {
     // ensures that books are issued and book info is updated
     Promise.allSettled(
       [dataSource.issueBooksToUser(userObj, bookObj, librarian),
-      dataSource.updateEntity(bookObj, bookInfoToUpdate)
+      dataSource.updateEntity(bookObj, 'Book', bookInfoToUpdate)
       ]).then((results) => {
         let hasError = false; // flag to track errors
 
