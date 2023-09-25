@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-server": "./node_modules/nodemon/bin/nodemon.js ./src/app.ts",
-    "start-worker": "./node_modules/nodemon/bin/nodemon.js ./src/processJobs.ts"
+    "start-server": "nodemon --ignore ./src/utils/dataSource.ts -e ts --exec ts-node ./src/app.ts",
+    "start-worker": "nodemon ./src/processJobs.ts"
   },
   "keywords": [],
   "author": "",
