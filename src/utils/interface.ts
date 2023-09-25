@@ -54,10 +54,16 @@ export interface EntityInterface {
   email?: string;
   org_email?: string;
   password?: string;
+  publisher?: string;
 }
 
 export type EntityType = Author | Book | Genre | Librarian | User;
 
+/**
+ * ### entity constructor that maps entity name to the type
+ */
 export const entityConstructors: Record<string, new () => EntityType> = {
   Author, Book, Genre, Librarian, User
 }
+
+export type EntityNameType = 'Author' | 'Book' | 'Genre' | 'Librarian' | 'User';

@@ -1,4 +1,4 @@
-import { DataSource, Like, UpdateResult } from "typeorm";
+import { DataSource, Entity, Like, UpdateResult } from "typeorm";
 import 'dotenv/config';
 
 import Author from "../controllers/AuthorController";
@@ -10,7 +10,7 @@ import BooksUsers from "../controllers/BookUserController";
 import Genre from "../controllers/GenreController";
 import Librarian from "../controllers/LibControllers";
 import User from "../controllers/UserController";
-import { EntityInterface, EntityType, entityConstructors } from "./interface";
+import { EntityInterface, EntityNameType, EntityType, entityConstructors } from "./interface";
 
 /**
  * class to load database and control connections
@@ -288,10 +288,13 @@ class DataClass {
     if (!entity) {
       throw new Error('Object cannot be null');
     }
-    const entityRepo = this.dataSource.getRepository(typeof entity);
-    const savedEntity = await entityRepo.save(entity);
-
-    return savedEntity;
+    try {
+      const entityRepo = this.dataSource.getRepository(typeof entity);
+      const savedEntity = await entityRepo.save(entity);
+      return savedEntity;
+    } catch (error) {
+      throw new Error('Entity not saved');
+    }
   }
 
 
@@ -359,9 +362,14 @@ class DataClass {
     ]);
   }
 
-  async updateEntity<EntityType>(entity: EntityType, entityName: string, toUpdate: EntityInterface) {
+  /**
+   * ### Updates an entity in the database with query builder
+   * @param entityName name of entity to be mapped
+   * @param toUpdate Object to update with
+   */
+  async updateEntity(entityName: EntityNameType, toUpdate: EntityInterface) {
     const { id, ...dataToUpdate } = toUpdate;
-    const EntityTypeCon = entityConstructors[entityName]
+    const EntityTypeCon = entityConstructors[entityName];
     try {
       await this.dataSource
         .createQueryBuilder()
@@ -370,10 +378,23 @@ class DataClass {
         .where("id = :id", { id })
         .execute();
     } catch (error) {
-      console.error(error);
-      throw new Error('Could not Update book');
+      throw new Error('Could not Update entity');
     }
+  }
 
+  async deleteEntity(entityName: EntityNameType, objId: string) {
+    const EntityTypeCon = entityConstructors[entityName];
+
+    try {
+      await this.dataSource
+        .createQueryBuilder()
+        .delete()
+        .from(EntityTypeCon)
+        .where("id = :id", { id: objId })
+        .execute();
+    } catch (error) {
+      throw new Error('Could not delete entity');
+    }
   }
 }
 

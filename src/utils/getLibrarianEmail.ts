@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+type uniqueReturn = ReturnType<typeof generateRandom>;
+
 /**
  * Generates random string for the user.
  * @returns string
@@ -46,7 +48,6 @@ export async function setUniqueEmail(name: string): Promise<string> {
   });
 }
 
-type uniqueReturn = ReturnType<typeof generateRandom>;
 /**
  * ### sets a unique password for the librarian
  * @returns a string

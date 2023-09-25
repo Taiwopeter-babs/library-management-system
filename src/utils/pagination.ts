@@ -1,6 +1,12 @@
 import { Request } from "express";
 
-export function skipItemsForPage(request: Request) {
+/**
+ * ### Checks `request.query.page` and verifies that it is
+ * ### a digit.
+ * @param request 
+ * @returns Items to skip for pagination
+ */
+export default function skipItemsForPage(request: Request) {
     let pageNum: number;
     const checkDigit = /^[0-9]+$/g; // regex to check digit
 
