@@ -9,11 +9,10 @@ import { Request, Response } from 'express';
 import dataSource from '../utils/dataSource';
 
 import { setUniqueEmail, setUnqiuePassword } from '../utils/getLibrarianEmail';
-import { createAccessToken } from '../middlewares/authAccessToken';
-import { verifyPassword } from '../utils/hashVerifyPassword';
-import { createNewLibrarian } from '../utils/saveObjects';
+import authAccess from '../middlewares/authAccess';
+import PasswordAuth from '../utils/passwordAuth';
+import CreateEntity from '../utils/createEntity';
 import redisClient from '../utils/redis';
-
 
 /**
  * Librarian class mapped to `librarians` table
@@ -55,10 +54,6 @@ class Librarian extends Base {
   @OneToMany(() => BooksLibrarians, booksLibrarians => booksLibrarians.librarian)
   booksToLibrarians: BooksLibrarians[];
 
-  constructor() {
-    super();
-  }
-
   /**
    * #### This endpoint uses the user's `name` to generate a unique platform
    * #### `org_email` and `password`. In case of forgotten password,
@@ -86,7 +81,7 @@ class Librarian extends Base {
       name, email, org_email, password
     }
     // check for truthy result
-    const librarianCreated = await createNewLibrarian(newLibrarian);
+    const librarianCreated = await CreateEntity.newLibrarian(newLibrarian);
     if (!librarianCreated) {
       return response.status(400).json({ error: 'Librarian not added' });
     }
@@ -116,8 +111,10 @@ class Librarian extends Base {
       return response.status(404).json({ error: 'Not found' });
     }
     // verify password
-    const [passwordVerified, accessToken] = await Promise.all(
-      [verifyPassword(password, librarian.password), createAccessToken(org_email)]);
+    const [passwordVerified, accessToken] = await Promise.all([
+      PasswordAuth.verifyPassword(password, librarian.password),
+      authAccess.createAccessToken(org_email)
+    ]);
 
     if (!passwordVerified) {
       return response.status(400).json({ error: 'Wrong password' });

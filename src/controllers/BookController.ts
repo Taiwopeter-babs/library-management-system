@@ -9,12 +9,12 @@ import BooksGenres from './BookGenreController';
 import BooksLibrarians from './BooksLibrarianController';
 import BooksUsers from './BookUserController';
 
-import { createNewBook } from '../utils/saveObjects';
-import { BookInterface, UserInterface } from '../utils/interface';
+import CreateEntity from '../utils/createEntity';
+import { BookInterface, EntityInterface, UserInterface } from '../utils/interface';
 import dataSource from '../utils/dataSource';
 // background jobs
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../processJobs';
-import { skipItemsForPage } from '../utils/pagination';
+import skipItemsForPage from '../utils/pagination';
 
 
 /**
@@ -59,7 +59,7 @@ class Book extends Base {
   @OneToMany(() => BooksLibrarians, booksLibrarians => booksLibrarians.book)
   booksToLibrarians: BooksLibrarians[];
 
-  // ========== ENDPOINTS ===============
+  // ========== ENDPOINTS =============== //
 
   /**
    * ### adds a new book to the `books` table
@@ -83,7 +83,7 @@ class Book extends Base {
     if (!publisher) {
       publisher = null;
     }
-    const savedBook = await createNewBook({ name, quantity, publisher });
+    const savedBook = await CreateEntity.newBook({ name, quantity, publisher });
     if (!savedBook) {
       return response.status(400).json({ error: 'Book not saved' });
     }
@@ -133,6 +133,94 @@ class Book extends Base {
     });
     return response.status(200).json(allBooks);
   }
+
+  /**
+   * ### retrieves a book with links to users
+   * @param request
+   * @param response
+   * @returns Response with a user object
+   */
+  static async getBook(request: Request, response: Response) {
+    let usersArray: string[];
+
+    const { bookId } = request.params;
+    const book = await dataSource.getBook(bookId, true);
+    if (!book) {
+      return response.status(404).json({ error: 'Book not found' });
+    }
+
+    // create links to users
+    if (book.booksToUsers.length > 0) {
+      usersArray = book.booksToUsers.map((user) => `http://0.0.0.0:5000/api/users/${user.userId}`)
+    } else {
+      usersArray = [];
+    }
+
+    let bookObj: BookInterface = {
+      id: book.id,
+      name: book.name,
+      quantity: book.quantity,
+      users: usersArray,
+      createdAt: book.createdAt
+    };
+    return response.status(200).json({ ...bookObj });
+
+  }
+
+  /**
+   * ### Updates a book. Only `name`, `quantity`, and `publisher` can be updated
+   * @param request
+   * @param response
+   */
+  static async updateBook(request: Request, response: Response) {
+    let name: string, quantity: number, publisher: string;
+
+    ({ name, quantity, publisher } = request.body);
+    const { bookId } = request.params;
+
+    // get object
+    const book = await dataSource.getBook(bookId);
+    if (!book) {
+      return response.status(404).json({ error: 'Book not found' });
+    }
+
+    // define object for update
+    const updateObj: EntityInterface = {
+      id: book.id,
+      updatedAt: new Date(),
+      ...{ name, quantity, publisher }
+    };
+
+    dataSource.updateEntity('Book', updateObj)
+      .then(() => {
+        return response.status(200).json(updateObj);
+      }).catch((error) => {
+        return response.status(500).json({ error: 'Internal Server Error' });
+      });
+  }
+  /**
+   * ### Deletes a book.
+   * @param request
+   * @param response
+   */
+  static async deleteBook(request: Request, response: Response) {
+
+    const { bookId } = request.params;
+
+    // get object
+    const book = await dataSource.getBook(bookId);
+    if (!book) {
+      return response.status(404).json({ error: 'Book not found' });
+    }
+
+    dataSource.deleteEntity('Book', book.id)
+      .then(() => {
+        return response.status(204).send({});
+      }).catch((error: Error | undefined) => {
+        return response.status(400).json({ error: 'Unsuccessful deletion' });
+      });
+  }
+
 }
 
 export default Book;

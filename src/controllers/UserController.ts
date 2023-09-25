@@ -5,13 +5,12 @@ import Base from './BaseController';
 import BooksUsers from './BookUserController';
 import dataSource from '../utils/dataSource';
 
-import { createNewUser } from '../utils/saveObjects';
+import CreateEntity from '../utils/createEntity';
 import { EntityInterface, UserInterface } from '../utils/interface';
-import { skipItemsForPage } from '../utils/pagination';
-
+import skipItemsForPage from '../utils/pagination';
 
 /**
- * User class mapped to `users` table
+ * ### User class mapped to `users` table
  */
 @Entity('users')
 class User extends Base {
@@ -63,7 +62,7 @@ class User extends Base {
    * @param request request object
    * @param response response object
    */
-  static async getUser(request: Request, response: Response): Promise<Response> {
+  static async getUserByEmail(request: Request, response: Response): Promise<Response> {
     const { userEmail } = request.params;
     if (!userEmail) {
       return response.status(400).json({ error: 'Missing email' });
@@ -82,6 +81,32 @@ class User extends Base {
 
     return response.status(200).json(userObj)
   }
+
+  /**
+   * ### retrieves a user from the database
+   * @param request request object
+   * @param response response object
+   */
+  static async getUserById(request: Request, response: Response): Promise<Response> {
+    const { userId } = request.params;
+    if (!userId) {
+      return response.status(400).json({ error: 'Missing Id' });
+    }
+    const user = await dataSource.getUser(userId, true);
+    if (!user) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+    const userObj: UserInterface = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      books: user.booksToUsers?.length ? user.booksToUsers.map((book) => book.bookId) : [],
+      createdAt: user.createdAt
+    };
+
+    return response.status(200).json(userObj)
+  }
+
 
 
   /**
@@ -102,7 +127,7 @@ class User extends Base {
       return response.status(400).json({ error: 'User already exists' });
     }
     // create a new user
-    const newUser = await createNewUser({ name, email });
+    const newUser = await CreateEntity.newUser({ name, email });
     const userBooks = newUser?.booksToUsers?.length ? newUser.booksToUsers.map((book) => book.bookId) : [];
 
     const userObj: UserInterface = {
@@ -153,7 +178,7 @@ class User extends Base {
     }
     // check if book is in user's collection
     const userBookIndex = userObj.booksToUsers?.map((book) => book.bookId).indexOf(bookObj.id);
-    console.log(userBookIndex)
+
     if (userBookIndex !== -1) {
       return response.status(200).json({ userId, bookId, message: 'Book already issued' });
     }
@@ -166,12 +191,11 @@ class User extends Base {
     // ensures that books are issued and book info is updated
     Promise.allSettled(
       [dataSource.issueBooksToUser(userObj, bookObj, librarian),
-      dataSource.updateEntity(bookObj, 'Book', bookInfoToUpdate)
+      dataSource.updateEntity('Book', bookInfoToUpdate)
       ]).then((results) => {
         let hasError = false; // flag to track errors
 
         results.forEach((res) => {
-          console.log(res.status);
           if (res.status !== 'fulfilled') {
             hasError = true;
           }
@@ -199,9 +223,9 @@ class User extends Base {
 
       }).catch((error) => {
         console.error(error);
-        response.status(500).json(
+        response.status(400).json(
           {
-            error: 'Internal Server Error',
+            error: 'Could not add book to user',
             borrowerId: userId,
             bookId
           });
