@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 // middlewares
-import authAccess from '../../middlewares/authAccess';
+import { verifyAccessToken } from '../../middlewares/authAccess';
 // controllers
 import User from '../../controllers/UserController';
 import Librarian from '../../controllers/LibControllers';
@@ -14,26 +14,26 @@ const router = Router();
  * ENDPOINTS
  */
 // USERS
-router.get('/users', authAccess.verifyAccessToken, User.getAllUsers);
-router.get('/users/:userEmail', authAccess.verifyAccessToken, User.getUserByEmail);
-router.get('/users/id/:userId', authAccess.verifyAccessToken, User.getUserById);
-router.post('/users', authAccess.verifyAccessToken, User.addUser);
-router.post('/users/:userId/books/:bookId', authAccess.verifyAccessToken, User.addBookToUser);
+router.get('/users', verifyAccessToken, User.getAllUsers);
+router.get('/users/:userEmail', verifyAccessToken, User.getUserByEmail);
+router.get('/users/id/:userId', verifyAccessToken, User.getUserById);
+router.post('/users', verifyAccessToken, User.addUser);
+router.post('/users/:userId/books/:bookId', verifyAccessToken, User.addBookToUser);
 
 /**
  * BOOKS
  */
-router.post('/books', authAccess.verifyAccessToken, Book.addBook);
-router.get('/books', authAccess.verifyAccessToken, Book.getAllBooks);
-router.get('/books/:bookId', authAccess.verifyAccessToken, Book.getBook);
-router.put('/books/:bookId', authAccess.verifyAccessToken, Book.updateBook);
-router.delete('/books/:bookId', authAccess.verifyAccessToken, Book.deleteBook);
+router.post('/books', verifyAccessToken, Book.addBook);
+router.get('/books', verifyAccessToken, Book.getAllBooks);
+router.get('/books/:bookId', verifyAccessToken, Book.getBook);
+router.put('/books/:bookId', verifyAccessToken, Book.updateBook);
+router.delete('/books/:bookId', verifyAccessToken, Book.deleteBook);
 
 /**
  * librarians
  */
 router.post('/librarians/', Librarian.postNewLibrarian);
 router.post('/librarians/login', Librarian.loginLibrarian);
-router.delete('/librarians/logout', authAccess.verifyAccessToken, Librarian.logoutLibrarian);
+router.delete('/librarians/logout', verifyAccessToken, Librarian.logoutLibrarian);
 
 export default router;
