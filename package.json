@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-server": "nodemon --ignore ./src/utils/dataSource.ts -e ts --exec ts-node ./src/app.ts",
+    "start-server": "nodemon --exec ts-node ./src/app.ts",
     "start-worker": "nodemon ./src/processJobs.ts"
   },
   "keywords": [],
