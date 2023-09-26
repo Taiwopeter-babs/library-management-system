@@ -65,6 +65,10 @@ class Book extends Base {
    * ### adds a new book to the `books` table
    */
   static async addBook(request: Request, response: Response) {
+    let usersArray: string[];
+    let authorsArray: string[];
+    let genresArray: string[];
+
     // regex to validate quantity input
     const checkDigit = /^[0-9]+$/g;
     // authors and genres are arrays of authors and genres respectively
@@ -107,7 +111,17 @@ class Book extends Base {
         );
       }
     }
-    return response.status(201).json({ bookName: savedBook.name, message: 'Book added' });
+
+    let bookObj: BookInterface = {
+      id: savedBook.id,
+      name: savedBook.name,
+      quantity: savedBook.quantity,
+      users: [],
+      authors,
+      genres,
+      createdAt: savedBook.createdAt
+    };
+    return response.status(201).json({ ...bookObj, message: 'Book added' });
   }
 
   /**
@@ -142,6 +156,8 @@ class Book extends Base {
    */
   static async getBook(request: Request, response: Response) {
     let usersArray: string[];
+    let authorsArray: string[];
+    let genresArray: string[];
 
     const { bookId } = request.params;
     const book = await dataSource.getBook(bookId, true);
@@ -155,6 +171,7 @@ class Book extends Base {
     } else {
       usersArray = [];
     }
+
 
     let bookObj: BookInterface = {
       id: book.id,

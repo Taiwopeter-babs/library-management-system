@@ -9,7 +9,7 @@ import { Request, Response } from 'express';
 import dataSource from '../utils/dataSource';
 
 import { setUniqueEmail, setUnqiuePassword } from '../utils/getLibrarianEmail';
-import authAccess from '../middlewares/authAccess';
+import { createAccessToken } from '../middlewares/authAccess';
 import PasswordAuth from '../utils/passwordAuth';
 import CreateEntity from '../utils/createEntity';
 import redisClient from '../utils/redis';
@@ -113,7 +113,7 @@ class Librarian extends Base {
     // verify password
     const [passwordVerified, accessToken] = await Promise.all([
       PasswordAuth.verifyPassword(password, librarian.password),
-      authAccess.createAccessToken(org_email)
+      createAccessToken(org_email)
     ]);
 
     if (!passwordVerified) {
