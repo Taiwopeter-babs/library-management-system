@@ -25,7 +25,7 @@ export default class CreateEntity {
     try {
       const hash = await PasswordAuth.hashPassword(password);
       librarian.password = hash;
-      savedEntity = await dataSource.saveEntity(librarian);
+      savedEntity = await dataSource.saveEntity(librarian, 'Librarian');
     } catch (error) {
       return null;
     }
@@ -42,7 +42,7 @@ export default class CreateEntity {
     book.publisher = publisher;
 
     try {
-      savedBook = await dataSource.saveEntity(book);
+      savedBook = await dataSource.saveEntity(book, 'Book');
     } catch (error) {
       return null;
     }
@@ -58,7 +58,7 @@ export default class CreateEntity {
     user.email = email;
 
     try {
-      savedUser = await dataSource.saveEntity(user);
+      savedUser = await dataSource.saveEntity(user, 'User');
     } catch (error) {
       return null
     }

@@ -29,6 +29,8 @@ export interface BookInterface {
   quantity: number;
   publisher?: string | null;
   users?: Array<string>;
+  authors?: Array<string>;
+  genres?: Array<string>;
   createdAt?: Date;
 }
 

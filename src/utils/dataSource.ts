@@ -173,7 +173,7 @@ class DataClass {
 
   /**
    * ### Gets a librarian object
-   * @param librarianId 
+   * @param librarianEmail
    * @returns a `Librarian` object
    */
   async getLibrarian(librarianEmail: string, relation: boolean = false) {
@@ -284,15 +284,17 @@ class DataClass {
    * @param entity entity object to be saved to the database
    * @returns the saved entity
    */
-  async saveEntity<EntityType>(entity: EntityType): Promise<EntityType> {
+  async saveEntity<EntityType>(entity: EntityType, entityName: string): Promise<EntityType> {
     if (!entity) {
       throw new Error('Object cannot be null');
     }
+    const EntityTypeCon = entityConstructors[entityName];
     try {
-      const entityRepo = this.dataSource.getRepository(typeof entity);
+      const entityRepo = this.dataSource.getRepository(EntityTypeCon);
       const savedEntity = await entityRepo.save(entity);
       return savedEntity;
     } catch (error) {
+      console.error(error);
       throw new Error('Entity not saved');
     }
   }
@@ -371,7 +373,7 @@ class DataClass {
     const { id, ...dataToUpdate } = toUpdate;
     const EntityTypeCon = entityConstructors[entityName];
     try {
-      await this.dataSource
+      const updatedEntity = await this.dataSource
         .createQueryBuilder()
         .update(EntityTypeCon)
         .set({ ...dataToUpdate })
