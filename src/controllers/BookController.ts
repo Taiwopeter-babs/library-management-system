@@ -10,11 +10,12 @@ import BooksLibrarians from './BooksLibrarianController';
 import BooksUsers from './BookUserController';
 
 import CreateEntity from '../utils/createEntity';
-import { BookInterface, EntityInterface, UserInterface } from '../utils/interface';
+import { BookInterface, CacheInterface, EntityInterface, UserInterface } from '../utils/interface';
 import dataSource from '../utils/dataSource';
 // background jobs
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../processJobs';
 import skipItemsForPage from '../utils/pagination';
+import CacheData from '../middlewares/getSetCacheData';
 
 
 /**
@@ -119,7 +120,8 @@ class Book extends Base {
       users: [],
       authors,
       genres,
-      createdAt: savedBook.createdAt
+      createdAt: savedBook.createdAt,
+      updatedAt: savedBook.updatedAt
     };
     return response.status(201).json({ ...bookObj, message: 'Book added' });
   }
@@ -141,7 +143,8 @@ class Book extends Base {
         id: book.id,
         quantity: book.quantity,
         users: book.booksToUsers?.length ? book.booksToUsers.map((user) => user.userId) : [],
-        createdAt: book.createdAt
+        createdAt: book.createdAt,
+        updatedAt: book.updatedAt
       };
       return bookObj;
     });
@@ -156,8 +159,6 @@ class Book extends Base {
    */
   static async getBook(request: Request, response: Response) {
     let usersArray: string[];
-    let authorsArray: string[];
-    let genresArray: string[];
 
     const { bookId } = request.params;
     const book = await dataSource.getBook(bookId, true);
@@ -173,15 +174,19 @@ class Book extends Base {
     }
 
 
-    let bookObj: BookInterface = {
+    let bookObj: CacheInterface = {
       id: book.id,
       name: book.name,
       quantity: book.quantity,
       users: usersArray,
-      createdAt: book.createdAt
+      createdAt: book.createdAt,
+      updatedAt: book.updatedAt
     };
-    return response.status(200).json({ ...bookObj });
 
+    // cache data for recurring requests
+    await CacheData.setDataToCache(bookObj);
+
+    return response.status(200).json({ ...bookObj });
   }
 
   /**

@@ -6,7 +6,8 @@ import BooksUsers from './BookUserController';
 import dataSource from '../utils/dataSource';
 
 import CreateEntity from '../utils/createEntity';
-import { EntityInterface, UserInterface } from '../utils/interface';
+import CacheData from '../middlewares/getSetCacheData';
+import { CacheInterface, EntityInterface, UserInterface } from '../utils/interface';
 import skipItemsForPage from '../utils/pagination';
 
 /**
@@ -96,13 +97,16 @@ class User extends Base {
     if (!user) {
       return response.status(404).json({ error: 'Not found' });
     }
-    const userObj: UserInterface = {
+    const userObj: CacheInterface = {
       id: user.id,
       name: user.name,
       email: user.email,
       books: user.booksToUsers?.length ? user.booksToUsers.map((book) => book.bookId) : [],
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      updatedAt: user.createdAt
     };
+     // cache data for recurring requests
+     await CacheData.setDataToCache(userObj);
 
     return response.status(200).json(userObj)
   }
@@ -130,11 +134,12 @@ class User extends Base {
     const newUser = await CreateEntity.newUser({ name, email });
     const userBooks = newUser?.booksToUsers?.length ? newUser.booksToUsers.map((book) => book.bookId) : [];
 
-    const userObj: UserInterface = {
+    const userObj: CacheInterface = {
       id: newUser?.id,
       name,
       email,
       createdAt: newUser?.createdAt,
+      updatedAt: newUser?.updatedAt,
       books: userBooks
     };
 
