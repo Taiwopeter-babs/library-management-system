@@ -1,65 +1,122 @@
+import { createClient } from "redis";
+
+interface UserInterface {
+    name: string;
+    email: string;
+    id: number;
+    books?: Array<string>;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+console.log()
+
+const testObj: UserInterface = {
+    name: "tee",
+    email: "tee@,com",
+    id: 1,
+    books: ['first book', 'second book'],
+    createdAt: new Date(),
+    updatedAt: new Date()
+}
 
 
-// testSaveAuthors();
+const redisClient = createClient();
 
-// interface SetTestInterface {
-//   name: string,
-//   password: string
-// }
+const connectClient = async () => {
+    await redisClient.connect();
 
-// class SetTest {
-//   _name: string;
-//   _email: string;
-//   _password: string;
+    if (redisClient.isOpen && redisClient.isReady) {
+        console.log('listening');
+    }
+}
 
-//   constructor(props: SetTestInterface) {
-//     this._password = props.password;
-//     this._name = props.name
-//   }
+redisClient.on('connect', () => {
+    console.log('connected');
+}).on('error', (error) => {
+    console.log('Connection to redis failed', error);
+});
 
-//   get email() {
-//     return this._email
-//   }
+async function hSet(hashKey: string, fields: any) {
+    const { updatedAt, createdAt, ...rest } = fields;
+    const toCache = {
+        updatedAt: updatedAt.toString(),
+        createdAt: createdAt.toString(),
+        ...rest
+    }
 
-//   set email(value: string | null) {
-//     let nameForEmail;
-//     const nameM = this._name.trim().split(' ');
-//     if (nameM.length >= 2) {
-//       nameForEmail = nameM.splice(0, 2).join('_');
-//     } else {
-//       nameForEmail = nameM[0];
-//     }
-//     this._email = nameForEmail + '@lms.com'
-//   }
+    try {
+        const res = await redisClient.hSet(hashKey, toCache);
+        return res;
+    } catch (error) {
+        console.error(error);
+        return;
+    }
+}
 
-//   generateRandom = () => {
 
-//     return new Promise((resolve, reject) => {
-//       let result = '';
+async function hGetAll(hashKey: string) {
+    try {
+        const { updatedAt, createdAt, ...rest } = await redisClient.hGetAll(hashKey);
+        const cachedData = {
+            updatedAt: new Date(updatedAt),
+            createdAt: new Date(createdAt),
+            ...rest
+        }
+        return cachedData;
+    } catch (error) {
+        return null;
+    }
+}
 
-//       const chars = process.env.RANDOM_CHARACTERS;
-//       const charsLength = chars?.length;
+async function listPush(listKey: string, array: Array<string>) {
+    let itemCount = 0;
+    try {
+        for await (let item of array) {
+            await redisClient.lPush(listKey, item);
+            itemCount += 1;
+        }
+        return itemCount;
+    } catch (error) {
+        return 0;
+    }
+}
 
-//       let count = 0;
+async function listRange(key: string) {
+    const result = await redisClient.lRange(key, 0, -1);
+    return result
+}
 
-//       while (count < 10) {
-//         result += chars?.charAt(Math.floor(Math.random() * (charsLength ?? 10)));
-//         count += 1;
-//       }
-//       resolve(result);
-//     })
-//   }
-// }
 
-// // const prop = { name: ' taiwo peter ', password: 'password' }
+async function run() {
+    let dataNum: number | undefined = 0;
+    let itemCount: number = 0;
 
-// // const set1 = new SetTest(prop);
-// // set1.email = 'tee';
-// // console.log(set1.email, set1._email);
+    console.log('Start')
+    try {
+        await connectClient();
 
-// // set1.generateRandom()
-// //   .then((res) => {
-// //     console.log(res);
-// //   })
-const today = new Date();
-console.log(today);
+        const { books, ...rest } = testObj;
+        if (books) {
+            [dataNum, itemCount] = await Promise.all([
+                hSet('firstHash:data', rest),
+                listPush('firstHash:data:list', books)
+            ])
+        }
+
+        console.log(dataNum, itemCount);
+        const data = await hGetAll('firstHash:data');
+        console.log(data);
+
+        const array = await listRange('firstHash:data:list')
+        console.log(array);
+
+
+        return;
+    } catch (error) {
+        console.error(error);
+    }
+
+}
+
+run();

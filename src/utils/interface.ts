@@ -20,29 +20,41 @@ export interface NewBook {
   publisher: string | null;
 }
 
+interface BaseInterface {
+  id?: string;
+  name: string;
+  updatedAt?: Date;
+  createdAt?: Date;
+}
+
 /**
  * Book Interface
  */
-export interface BookInterface {
-  id: string;
-  name: string;
-  quantity: number;
+export interface BookInterface extends BaseInterface {
+  quantity?: number;
   publisher?: string | null;
   users?: Array<string>;
   authors?: Array<string>;
   genres?: Array<string>;
-  createdAt?: Date;
 }
 
 /**
  * ### interface for a new user
  */
-export interface UserInterface {
-  name: string;
+export interface UserInterface extends BaseInterface {
   email: string;
-  id?: string;
   books?: Array<string>;
-  createdAt?: Date;
+}
+
+/**
+ * ### interface for caching data
+ */
+export interface CacheInterface extends BaseInterface {
+  users?: string[];
+  books?: string[];
+  email?: string;
+  quantity?: number;
+  publisher?: string;
 }
 
 /**
@@ -58,6 +70,7 @@ export interface EntityInterface {
   password?: string;
   publisher?: string;
 }
+
 
 export type EntityType = Author | Book | Genre | Librarian | User;
 
