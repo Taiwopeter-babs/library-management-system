@@ -1,5 +1,7 @@
-import { DataSource, Entity, Like, UpdateResult } from "typeorm";
+import { DataSource, Driver, DataSourceOptions, Like } from "typeorm";
 import 'dotenv/config';
+
+import setOrmConfig from "./ormConfig";
 
 import Author from "../controllers/AuthorController";
 import Book from "../controllers/BookController";
@@ -17,25 +19,15 @@ import { EntityInterface, EntityNameType, EntityType, entityConstructors } from 
  */
 class DataClass {
 
-  dataSource: DataSource
+  dataSource: DataSource;
 
   /**
    * ### Initializes the database connection
    */
-  constructor() {
-    this.dataSource = new DataSource({
-      type: "mysql",
-      host: process.env.HOST,
-      port: parseInt(process.env.DB_PORT ?? '3306', 10),
-      username: process.env.USERNAME,
-      password: process.env.PASSWORD,
-      database: process.env.DATABASE,
-      entities: [Author, Book, Genre, Librarian,
-        User, BooksAuthors, BooksGenres, BooksLibrarians,
-        BooksUsers
-      ],
-      synchronize: true
-    })
+  constructor(ormConfig: DataSourceOptions) {
+
+    this.dataSource = new DataSource({ ...ormConfig });
+
     // initialize database connection
     this.dataSource.initialize()
       .then(() => {
@@ -44,13 +36,6 @@ class DataClass {
       .catch((err) => {
         console.error("Error during Data Source initialization", err);
       });
-  }
-
-  /**
-   * ### closes the database connection
-   */
-  async close() {
-    await this.dataSource.destroy();
   }
 
   /**
@@ -400,6 +385,9 @@ class DataClass {
   }
 }
 
-const dataSource = new DataClass();
+// Get database configuration
+const ormConfig: DataSourceOptions = setOrmConfig();
+
+const dataSource = new DataClass(ormConfig);
 
 export default dataSource;
