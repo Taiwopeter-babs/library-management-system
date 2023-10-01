@@ -111,14 +111,12 @@ class Librarian extends Base {
       return response.status(404).json({ error: 'Not found' });
     }
     // verify password
-    const [passwordVerified, accessToken] = await Promise.all([
-      PasswordAuth.verifyPassword(password, librarian.password),
-      createAccessToken(org_email)
-    ]);
-
+    const passwordVerified = await PasswordAuth.verifyPassword(password, librarian.password);
     if (!passwordVerified) {
       return response.status(400).json({ error: 'Wrong password' });
     }
+
+    const accessToken = await createAccessToken(org_email);
 
     // set access token in cookies; maxAge is 5 days
     response.cookie('rememberUser', accessToken, { httpOnly: true, maxAge: 432000 * 1000 });
