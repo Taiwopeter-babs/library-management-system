@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-server": "nodemon --exec ts-node ./src/app.ts",
-    "start-worker": "nodemon ./src/processJobs.ts"
+    "start-server": "NODE_ENV=development nodemon --exec ts-node ./src/app.ts",
+    "start-worker": "NODE_ENV=development nodemon --exec ts-node ./src/processJobs.ts",
+    "start-test_worker": "NODE_ENV=test ts-node ./src/processJobs.ts",
+    "start-test_server": "NODE_ENV=test ts-node ./src/app.ts",
+    "test": "NODE_ENV=test mocha --require ts-node/register tests/*.test.ts",
+    "test-env": "NODE_ENV=test ts-node ./test.ts"
   },
   "keywords": [],
   "author": "",
@@ -32,8 +36,11 @@
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.2",
+    "@types/mocha": "^10.0.2",
     "@types/morgan": "^1.9.5",
     "@types/uuid": "^9.0.2",
+    "axios": "^1.5.1",
+    "chai": "*",
     "nodemon": "^3.0.1"
   }
 }
