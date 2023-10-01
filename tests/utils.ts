@@ -1,0 +1,5 @@
+const testUtil = {
+    cookieStr: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsaWJyYXJpYW5PcmdFbWFpbCI6InRlc3RfbmFtZV9rYTlAbG1zbWFpbC5jb20iLCJpYXQiOjE2OTYxMTU3MTksImV4cCI6MTY5NjU0NzcxOSwiYXVkIjoidGVzdF9uYW1lX2thOUBsbXNtYWlsLmNvbSJ9.b0AO1jIeq3p0GONuB9Rn9yBPUvbnPPDZ5EjBiPIGyf8'
+};
+
+export default testUtil;
