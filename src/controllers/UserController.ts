@@ -105,8 +105,8 @@ class User extends Base {
       createdAt: user.createdAt,
       updatedAt: user.createdAt
     };
-     // cache data for recurring requests
-     await CacheData.setDataToCache(userObj);
+    // cache data for recurring requests
+    await CacheData.setDataToCache(userObj);
 
     return response.status(200).json(userObj)
   }

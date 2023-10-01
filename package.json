@@ -8,7 +8,7 @@
     "start-worker": "NODE_ENV=development nodemon --exec ts-node ./src/processJobs.ts",
     "start-test_worker": "NODE_ENV=test ts-node ./src/processJobs.ts",
     "start-test_server": "NODE_ENV=test ts-node ./src/app.ts",
-    "test": "NODE_ENV=test mocha --require ts-node/register tests/*.test.ts",
+    "test": "NODE_ENV=test mocha --require ts-node/register",
     "test-env": "NODE_ENV=test ts-node ./test.ts"
   },
   "keywords": [],
@@ -41,6 +41,7 @@
     "@types/uuid": "^9.0.2",
     "axios": "^1.5.1",
     "chai": "*",
+    "mocha": "^10.2.0",
     "nodemon": "^3.0.1"
   }
 }

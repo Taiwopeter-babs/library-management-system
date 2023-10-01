@@ -27,7 +27,7 @@ const ormConfig: Array<DataSourceOptions> = [
             "src/controllers/*.ts"
         ],
         synchronize: true,
-        // dropSchema: true,
+        dropSchema: true,
         logging: ['query', 'schema', 'error'],
         logger: 'file'
     }
