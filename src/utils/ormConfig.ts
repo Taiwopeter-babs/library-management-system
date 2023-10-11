@@ -1,28 +1,24 @@
 import 'dotenv/config';
 import { DataSourceOptions } from 'typeorm';
+import { configArray } from './config';
+
 
 const ormConfig: Array<DataSourceOptions> = [
     {
         name: "development",
         type: "mysql",
-        host: "localhost",
-        port: 3306,
-        username: "lms_local_user",
-        password: process.env.PASSWORD,
-        database: "lms_db",
+        ...configArray[0],
         entities: [
             "src/controllers/*.ts"
         ],
-        synchronize: true
+        synchronize: true,
+        logging: ['schema', 'error'],
+        logger: 'file'
     },
     {
         name: "test",
         type: "mysql",
-        host: "localhost",
-        port: 3306,
-        username: "lms_local_user",
-        password: process.env.PASSWORD,
-        database: "lms_test_db",
+        ...configArray[1],
         entities: [
             "src/controllers/*.ts"
         ],
@@ -38,7 +34,7 @@ const ormConfig: Array<DataSourceOptions> = [
  */
 const setOrmConfig = (): DataSourceOptions => {
     const nodeEnv = process.env.NODE_ENV;
-    console.log(nodeEnv);
+
     if (nodeEnv === 'development') {
         return ormConfig[0];
     }

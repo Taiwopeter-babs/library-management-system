@@ -89,7 +89,6 @@ export async function verifyAccessToken(request: Request, response: Response, ne
       return response.status(401).json({ error: 'Unauthorized' });
     }
     // verify user
-    // verify user
     const librarian = await dataSource.getLibrarian(librarianOrgEmail, false);
     if (!librarian) {
       return response.status(401).json({ error: 'Unauthorized' });

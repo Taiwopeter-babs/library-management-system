@@ -10,13 +10,13 @@ export function generateRandom(numLength: number): Promise<string> {
   return new Promise((resolve, reject) => {
     let result = '';
 
-    const chars = process.env.RANDOM_CHARACTERS;
-    const charsLength = chars?.length;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charsLength = chars.length;
 
     let count = 0;
 
     while (count < numLength) {
-      result += chars?.charAt(Math.floor(Math.random() * (charsLength ?? 10)));
+      result += chars.charAt(Math.floor(Math.random() * (charsLength)));
       count += 1;
     }
     resolve(result);

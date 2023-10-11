@@ -1,5 +1,4 @@
 import { DataSource, Driver, DataSourceOptions, Like } from "typeorm";
-import 'dotenv/config';
 
 import setOrmConfig from "./ormConfig";
 
