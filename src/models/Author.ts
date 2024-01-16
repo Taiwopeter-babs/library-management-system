@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany } from 'typeorm';
-import Base from './BaseController';
-import BooksAuthors from './BookAuthorController';
+import Base from './Base';
+import BooksAuthors from './BooksAuthors';
 
 
 /**

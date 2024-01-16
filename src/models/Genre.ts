@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany } from 'typeorm';
-import Base from './BaseController';
-import BooksGenres from './BookGenreController';
+import Base from './Base';
+import BooksGenres from './BooksGenres';
 
 /**
  * Genre class - A genre can be linked to multiple books

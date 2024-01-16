@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import { DataSourceOptions } from 'typeorm';
-import ormConfig from './ormConfig';
+
 
 type Config = {
     host?: string;

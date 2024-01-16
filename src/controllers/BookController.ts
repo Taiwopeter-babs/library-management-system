@@ -1,4 +1,3 @@
-import { Column, Entity, OneToMany } from 'typeorm';
 import { Request, Response } from 'express';
 
 import Author from './AuthorController';
@@ -10,88 +9,55 @@ import BooksLibrarians from './BooksLibrarianController';
 import BooksUsers from './BookUserController';
 
 import CreateEntity from '../utils/createEntity';
-import { BookInterface, CacheInterface, EntityInterface, UserInterface } from '../utils/interface';
+import { BookInterface, CacheInterface, EntityInterface, TBook, UserInterface } from '../utils/interface';
 import dataSource from '../utils/dataSource';
 // background jobs
-import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../processJobs';
+import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../backgroundJobs';
 import skipItemsForPage from '../utils/pagination';
 import CacheData from '../middlewares/getSetCacheData';
+import BookRepo from '../repositories/BookRepo';
 
 
 /**
  * Book class mapped to `books` table
  */
-@Entity('books')
-class Book extends Base {
-
-  @Column({
-    type: 'varchar',
-    length: 256,
-    nullable: false
-  })
-  name: string;
-
-  @Column({
-    type: "integer",
-    default: 0
-  })
-  quantity: number;
-
-  @Column({
-    type: 'varchar',
-    length: 128,
-    nullable: true
-  })
-  publisher: string | null;
-
-  // relationship books-users
-  @OneToMany(() => BooksUsers, booksUsers => booksUsers.book)
-  booksToUsers: BooksUsers[];
-
-  // relationship books-authors
-  @OneToMany(() => BooksAuthors, booksAuthors => booksAuthors.book)
-  booksToAuthors: BooksAuthors[];
-
-  // relationship books-genres
-  @OneToMany(() => BooksGenres, booksGenres => booksGenres.book)
-  booksToGenres: BooksGenres[];
-
-  // relationship books-librarians
-  @OneToMany(() => BooksLibrarians, booksLibrarians => booksLibrarians.book)
-  booksToLibrarians: BooksLibrarians[];
-
-  // ========== ENDPOINTS =============== //
+class BookController {
 
   /**
-   * ### adds a new book to the `books` table
+   * ### adds a new book
    */
   static async addBook(request: Request, response: Response) {
-    let usersArray: string[];
-    let authorsArray: string[];
-    let genresArray: string[];
-
     // regex to validate quantity input
     const checkDigit = /^[0-9]+$/g;
+
     // authors and genres are arrays of authors and genres respectively
     let { name, quantity, publisher, authors, genres } = request.body;
+
     // validate input
-    if (!name) return response.status(400).json({ error: 'Missing name' });
+    if (!name) {
+      return response.status(400).json({ error: 'Missing name' });
+    }
+
     if (quantity) {
       // check if it's a number
       if (!checkDigit.test(quantity)) {
-        return response.status(400).json({ error: 'Quantity not a number' });
+        quantity = 0;
+      } else {
+        quantity = parseInt(quantity, 10);
       }
-      quantity = parseInt(quantity, 10);
     } else {
       quantity = 0;
     }
+
     if (!publisher) {
       publisher = null;
     }
-    const savedBook = await CreateEntity.newBook({ name, quantity, publisher });
+
+    const savedBook = await BookRepo.addBook({ name, quantity, publisher });
     if (!savedBook) {
       return response.status(400).json({ error: 'Book not saved' });
     }
+
     /**
      * Background jobs for linking authors and genres with a book:
      * In each array, query the genre or author by name; if it does not exist,
@@ -101,27 +67,33 @@ class Book extends Base {
       await addAuthorsToQueueAndProcess(authors, savedBook);
       await addGenresToQueueAndProcess(genres, savedBook);
     } catch (error: any) {
-      if (error.message === 'Author absent') {
-        return response.status(201).json(
-          { bookName: savedBook.name, message: 'Could not add book with author' }
-        );
-      }
-      if (error.message === 'Genre absent') {
-        return response.status(201).json(
-          { bookName: savedBook.name, message: 'Could not add book with genre' }
-        );
+
+      switch (error.message) {
+
+        case "Author absent":
+          return response.status(201).json(
+            { bookName: savedBook.name, message: 'Could not add book with author' }
+          );
+        case "Genre absent":
+          return response.status(201).json(
+            { bookName: savedBook.name, message: 'Could not add book with genre' }
+          );
+
       }
     }
 
-    let bookObj: BookInterface = {
-      id: savedBook.id,
-      name: savedBook.name,
-      quantity: savedBook.quantity,
+    const { id, createdAt, updatedAt } = savedBook;
+
+    let bookObj: TBook = {
+      id,
+      name,
+      quantity,
+      publisher,
       users: [],
       authors,
       genres,
-      createdAt: savedBook.createdAt,
-      updatedAt: savedBook.updatedAt
+      createdAt,
+      updatedAt
     };
     return response.status(201).json({ ...bookObj, message: 'Book added' });
   }
@@ -152,39 +124,44 @@ class Book extends Base {
   }
 
   /**
-   * ### retrieves a book with links to users
+   * ### retrieves a book
    * @param request
    * @param response
    * @returns Response with a user object
    */
   static async getBook(request: Request, response: Response) {
-    let usersArray: string[];
+    let idUsers: string[];
+    let idAuthors: string[];
 
     const { bookId } = request.params;
-    const book = await dataSource.getBook(bookId, true);
+
+    const book = await BookRepo.getBook(bookId, true);
+
     if (!book) {
       return response.status(404).json({ error: 'Book not found' });
     }
 
-    // create links to users
+    // users linked to book
     if (book.booksToUsers.length > 0) {
-      usersArray = book.booksToUsers.map((user) => `http://0.0.0.0:5000/api/users/${user.userId}`)
+      idUsers = book.booksToUsers.map((user) => user.userId)
     } else {
-      usersArray = [];
+      idUsers = [];
     }
+
+    // authors linked to book
 
 
     let bookObj: CacheInterface = {
       id: book.id,
       name: book.name,
       quantity: book.quantity,
-      users: usersArray,
+      users: idUsers,
       createdAt: book.createdAt,
       updatedAt: book.updatedAt
     };
 
     // cache data for recurring requests
-    await CacheData.setDataToCache(bookObj);
+    // await CacheData.setDataToCache(bookObj);
 
     return response.status(200).json({ ...bookObj });
   }

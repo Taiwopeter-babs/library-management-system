@@ -1,26 +1,4 @@
-import Author from "../controllers/AuthorController";
-import Book from "../controllers/BookController";
-import Genre from "../controllers/GenreController";
-import Librarian from "../controllers/LibControllers";
-import User from "../controllers/UserController";
-
-/**
- * interface for a new Librarian
- */
-export interface NewLibrarian {
-  name: string;
-  email: string;
-  org_email: string;
-  password: string;
-}
-
-export interface NewBook {
-  name: string;
-  quantity: number;
-  publisher: string | null;
-}
-
-interface BaseInterface {
+type TBase  = {
   id?: string;
   name: string;
   updatedAt?: Date;
@@ -28,57 +6,37 @@ interface BaseInterface {
 }
 
 /**
- * Book Interface
+ * interface for a new Librarian
  */
-export interface BookInterface extends BaseInterface {
-  quantity?: number;
-  publisher?: string | null;
+export type TLibrarian = {
+  email: string;
+  org_email: string;
+  password: string;
+} & TBase;
+
+
+export type TBook = {
+  quantity: number;
+  publisher: string | null;
   users?: Array<string>;
   authors?: Array<string>;
   genres?: Array<string>;
-}
+} & TBase;
 
-/**
- * ### interface for a new user
- */
-export interface UserInterface extends BaseInterface {
+
+
+export type TUser = {
   email: string;
   books?: Array<string>;
-}
+} & TBase;
 
 /**
  * ### interface for caching data
  */
-export interface CacheInterface extends BaseInterface {
-  users?: string[];
-  books?: string[];
-  email?: string;
-  quantity?: number;
-  publisher?: string;
-}
-
-/**
- * ### Interface for all entities
- */
-export interface EntityInterface {
-  id: string;
-  name?: string;
-  quantity?: number;
-  updatedAt: Date;
-  email?: string;
-  org_email?: string;
-  password?: string;
-  publisher?: string;
-}
-
-
-export type EntityType = Author | Book | Genre | Librarian | User;
-
-/**
- * ### entity constructor that maps entity name to the type
- */
-export const entityConstructors: Record<string, new () => EntityType> = {
-  Author, Book, Genre, Librarian, User
-}
-
-export type EntityNameType = 'Author' | 'Book' | 'Genre' | 'Librarian' | 'User';
+// export interface CacheInterface extends BaseInterface {
+//   users?: string[];
+//   books?: string[];
+//   email?: string;
+//   quantity?: number;
+//   publisher?: string;
+// }

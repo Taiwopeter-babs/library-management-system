@@ -1,6 +1,7 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn, CreateDateColumn, Column } from 'typeorm';
-import Book from './BookController';
-import User from './UserController';
+import { v4 as uuid } from 'uuid';
+import Book from './Book';
+import User from './User';
 
 
 
@@ -10,10 +11,13 @@ import User from './UserController';
 @Entity('books_users')
 class BooksUsers {
 
-  @PrimaryColumn({ length: 128 })
+  @PrimaryColumn({ length: 128, default: uuid() })
+  id: string
+
+  @Column({ length: 128 })
   userId: string;
 
-  @PrimaryColumn({ length: 128 })
+  @Column({ length: 128 })
   bookId: string;
 
   @CreateDateColumn({ type: "timestamp" })

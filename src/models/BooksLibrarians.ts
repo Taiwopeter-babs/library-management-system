@@ -1,6 +1,6 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn, CreateDateColumn, Column } from 'typeorm';
-import Book from './BookController';
-import Librarian from './LibControllers';
+import Book from './Book';
+import Librarian from './Librarian';
 
 
 /**

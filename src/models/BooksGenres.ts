@@ -1,6 +1,6 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn, CreateDateColumn } from 'typeorm';
-import Book from './BookController';
-import Genre from './GenreController';
+import Book from './Book';
+import Genre from './Genre';
 
 
 

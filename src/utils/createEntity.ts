@@ -12,6 +12,7 @@ import PasswordAuth from "./passwordAuth";
  * ### CreateEntity class
  */
 export default class CreateEntity {
+
   static async newLibrarian(librarianObj: NewLibrarian) {
     let savedEntity: Librarian;
 
@@ -32,23 +33,7 @@ export default class CreateEntity {
     return savedEntity;
   }
 
-  static async newBook(bookObj: NewBook) {
-    let savedBook: Book;
-
-    const { name, quantity, publisher } = bookObj;
-    const book = new Book();
-    book.name = name;
-    book.quantity = quantity;
-    book.publisher = publisher;
-
-    try {
-      savedBook = await dataSource.saveEntity(book, 'Book');
-    } catch (error) {
-      return null;
-    }
-    return savedBook;
-  }
-
+  
   static async newUser(userObj: UserInterface) {
     let savedUser: User;
 

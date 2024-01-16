@@ -9,7 +9,7 @@ const ormConfig: Array<DataSourceOptions> = [
         type: "mysql",
         ...configArray[0],
         entities: [
-            "src/controllers/*.ts"
+            "src/models/*.ts"
         ],
         synchronize: true,
         logging: ['schema', 'error'],
@@ -20,7 +20,7 @@ const ormConfig: Array<DataSourceOptions> = [
         type: "mysql",
         ...configArray[1],
         entities: [
-            "src/controllers/*.ts"
+            "src/models/*.ts"
         ],
         synchronize: true,
         dropSchema: true,
