@@ -17,18 +17,18 @@ const router = Router();
 // USERS
 router.get('/users', verifyAccessToken, User.getAllUsers);
 router.get('/users/email/:userEmail', verifyAccessToken, User.getUserByEmail);
-router.get('/users/id/:userId', verifyAccessToken, CacheData.getDataFromCache, User.getUserById);
+router.get('/users/:id', verifyAccessToken, CacheData.getData, User.getUserById);
 router.post('/users', verifyAccessToken, User.addUser);
-router.post('/users/:userId/books/:bookId', verifyAccessToken, User.addBookToUser);
+router.post('/users/:id/books/:id', verifyAccessToken, User.addBookToUser);
 
 /**
  * BOOKS
  */
 router.post('/books', verifyAccessToken, Book.addBook);
 router.get('/books', verifyAccessToken, Book.getAllBooks);
-router.get('/books/:bookId', verifyAccessToken, CacheData.getDataFromCache, Book.getBook);
-router.put('/books/:bookId', verifyAccessToken, Book.updateBook);
-router.delete('/books/:bookId', verifyAccessToken, Book.deleteBook);
+router.get('/books/:id', verifyAccessToken, CacheData.getData, Book.getBook);
+router.put('/books/:id', verifyAccessToken, Book.updateBook);
+router.delete('/books/:id', verifyAccessToken, Book.deleteBook);
 
 /**
  * librarians

@@ -1,17 +1,7 @@
 import { Request, Response } from 'express';
 
-import Author from './AuthorController';
-import Genre from './GenreController';
-import Base from './BaseController';
-import BooksAuthors from './BookAuthorController';
-import BooksGenres from './BookGenreController';
-import BooksLibrarians from './BooksLibrarianController';
-import BooksUsers from './BookUserController';
+import { TBook } from '../utils/interface';
 
-import CreateEntity from '../utils/createEntity';
-import { BookInterface, CacheInterface, EntityInterface, TBook, UserInterface } from '../utils/interface';
-import dataSource from '../utils/dataSource';
-// background jobs
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../backgroundJobs';
 import skipItemsForPage from '../utils/pagination';
 import CacheData from '../middlewares/getSetCacheData';
@@ -19,7 +9,7 @@ import BookRepo from '../repositories/BookRepo';
 
 
 /**
- * Book class mapped to `books` table
+ * Book controller
  */
 class BookController {
 
@@ -108,26 +98,23 @@ class BookController {
     // get number of items to skip
     const toSkipForPage = skipItemsForPage(request);
 
-    const books = await dataSource.getAllBooks(true, toSkipForPage);
-    const allBooks: Array<BookInterface> = books?.map((book) => {
-      let bookObj: BookInterface = {
+    const books = await BookRepo.getAllBooks(toSkipForPage);
+    const allBooks: Array<TBook> = books?.map((book) => {
+      let bookObj: TBook = {
         name: book.name,
         id: book.id,
+        publisher: book.publisher,
         quantity: book.quantity,
-        users: book.booksToUsers?.length ? book.booksToUsers.map((user) => user.userId) : [],
         createdAt: book.createdAt,
         updatedAt: book.updatedAt
       };
       return bookObj;
     });
-    return response.status(200).json(allBooks);
+    return response.status(200).json({ message: 'success', ...allBooks });
   }
 
   /**
    * ### retrieves a book
-   * @param request
-   * @param response
-   * @returns Response with a user object
    */
   static async getBook(request: Request, response: Response) {
     let idUsers: string[];
@@ -135,7 +122,7 @@ class BookController {
 
     const { bookId } = request.params;
 
-    const book = await BookRepo.getBook(bookId, true);
+    const book = await BookRepo.getBook(bookId);
 
     if (!book) {
       return response.status(404).json({ error: 'Book not found' });
@@ -150,52 +137,49 @@ class BookController {
 
     // authors linked to book
 
-
-    let bookObj: CacheInterface = {
+    let bookObj = {
       id: book.id,
       name: book.name,
       quantity: book.quantity,
-      users: idUsers,
+      users: book.booksToUsers,
       createdAt: book.createdAt,
       updatedAt: book.updatedAt
     };
 
     // cache data for recurring requests
-    // await CacheData.setDataToCache(bookObj);
+    await CacheData.setData(`${book.id}:data`, JSON.stringify(bookObj));
 
     return response.status(200).json({ ...bookObj });
   }
 
+
   /**
    * ### Updates a book. Only `name`, `quantity`, and `publisher` can be updated
-   * @param request
-   * @param response
    */
   static async updateBook(request: Request, response: Response) {
     let name: string, quantity: number, publisher: string;
 
     ({ name, quantity, publisher } = request.body);
-    const { bookId } = request.params;
+    const { id } = request.params;
 
     // get object
-    const book = await dataSource.getBook(bookId);
+    const book = await BookRepo.getBook(id);
     if (!book) {
       return response.status(404).json({ error: 'Book not found' });
     }
 
     // define object for update
-    const updateObj: EntityInterface = {
-      id: book.id,
+    const data = {
       updatedAt: new Date(),
       ...{ name, quantity, publisher }
     };
 
-    dataSource.updateEntity('Book', updateObj)
-      .then(() => {
-        return response.status(200).json(updateObj);
-      }).catch((error) => {
-        return response.status(500).json({ error: 'Internal Server Error' });
-      });
+    const isUpdated = await BookRepo.updateBook(id, data);
+    if (!isUpdated) {
+      return response.status(500).json({ error: 'Internal Server Error' });
+    }
+    return response.status(200).json(data);
+
   }
   /**
    * ### Deletes a book.
@@ -204,22 +188,21 @@ class BookController {
    */
   static async deleteBook(request: Request, response: Response) {
 
-    const { bookId } = request.params;
+    const { id } = request.params;
 
     // get object
-    const book = await dataSource.getBook(bookId);
+    const book = await BookRepo.getBook(id);
     if (!book) {
       return response.status(404).json({ error: 'Book not found' });
     }
 
-    dataSource.deleteEntity('Book', book.id)
-      .then(() => {
-        return response.status(204).send({});
-      }).catch((error: Error | undefined) => {
-        return response.status(400).json({ error: 'Unsuccessful deletion' });
-      });
+    const isDeleted = await BookRepo.deleteBook(id);
+    if (!isDeleted) {
+      return response.status(500).json({ error: 'Internal Server Error' });
+    }
+    return response.status(204).json({});
   }
 
 }
 
-export default Book;
+export default BookController;

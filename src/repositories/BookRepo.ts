@@ -3,6 +3,13 @@ import db from "../utils/dataSource";
 import { TBook } from "../utils/interface";
 import Book from "../models/Book";
 
+type TUpdate = {
+    name: string;
+    quantity: number;
+    publisher: string;
+    updatedAt: Date
+}
+
 
 export default class BookRepo {
 
@@ -22,13 +29,50 @@ export default class BookRepo {
 
     static async getBook(bookId: string) {
 
-        const book = this.repo.createQueryBuilder('book')
+        const book = await this.queryBuilder.select('book')
             .leftJoinAndSelect("book.users", "users")
             .leftJoinAndSelect("book.authors", "authors")
             .leftJoinAndSelect("book.genres", "genres")
             .where("book.id = :id", { id: bookId })
-            .getSql()
+            .getOne()
         return book;
+    }
+
+    static async getAllBooks(toSkip: number) {
+
+        const books = await this.queryBuilder.select('book')
+            .leftJoinAndSelect("book.users", "users")
+            .leftJoinAndSelect("book.authors", "authors")
+            .leftJoinAndSelect("book.genres", "genres")
+            .skip(toSkip).take(25)
+            .getMany()
+        return books;
+    }
+
+    static async updateBook(bookId: string, data: TUpdate) {
+
+        try {
+            await this.queryBuilder.update(Book)
+                .set({ ...data })
+                .where("id = :bookId", { bookId })
+                .execute();
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
+    }
+
+    static async deleteBook(bookId: string) {
+        try {
+            await this
+                .queryBuilder.delete()
+                .from(Book).where("id = :bookId", { bookId })
+                .execute()
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
     }
 
 }

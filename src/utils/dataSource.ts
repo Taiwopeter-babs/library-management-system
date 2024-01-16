@@ -89,24 +89,6 @@ class DataClass {
   }
 
 
-  /**
-   * ### get all books from the database, paginated by 25 books per page
-   * @param relation a boolean to load users relations with books:
-   * - default value is false
-   * @returns a Promise User array
-   */
-  async getAllBooks(relation: boolean = false, toSkipForPage: number): Promise<Book[]> {
-    const booksRepo = this.db.getRepository(Book);
-
-    const books = await booksRepo.find({
-      relations: {
-        booksToUsers: relation,
-      },
-      skip: toSkipForPage,
-      take: 25
-    });
-    return books;
-  }
 
   /**
    * ### get all users from the database
@@ -128,24 +110,6 @@ class DataClass {
     return users;
   }
 
-  /**
-   * ### saves an entity of types `Author, User, Books, Genre, Librarian`
-   * @param entity entity object to be saved to the database
-   * @returns the saved entity
-   */
-  async saveEntity<T>(entity: T, name: string): Promise<T> {
-    if (!entity) {
-      throw new Error('Object cannot be null');
-    }
-    try {
-      const entityRepo = this.getRepo(entity);
-      const savedEntity = await entityRepo.save(entity);
-      return savedEntity;
-    } catch (error) {
-      console.error(error);
-      throw new Error('Entity not saved');
-    }
-  }
 
 
   /**

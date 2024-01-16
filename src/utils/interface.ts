@@ -1,4 +1,4 @@
-type TBase  = {
+type TBase = {
   id?: string;
   name: string;
   updatedAt?: Date;
@@ -33,10 +33,6 @@ export type TUser = {
 /**
  * ### interface for caching data
  */
-// export interface CacheInterface extends BaseInterface {
-//   users?: string[];
-//   books?: string[];
-//   email?: string;
-//   quantity?: number;
-//   publisher?: string;
-// }
+export type TCache = {
+  [key: string]: string;
+};

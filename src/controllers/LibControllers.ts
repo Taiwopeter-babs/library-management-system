@@ -1,58 +1,18 @@
-/// <reference path='../utils/lms.d.ts' />
-import 'dotenv/config';
-import { Column, Entity, OneToMany } from 'typeorm';
-
-import { NewLibrarian } from '../utils/interface';
-import Base from './BaseController';
-import BooksLibrarians from './BooksLibrarianController';
 import { Request, Response } from 'express';
-import dataSource from '../utils/dataSource';
 
-import { setUniqueEmail, setUnqiuePassword } from '../utils/getLibrarianEmail';
+
+import { setEmail, setPassword } from '../utils/getLibrarianEmail';
 import { createAccessToken } from '../middlewares/authAccess';
 import PasswordAuth from '../utils/passwordAuth';
 import CreateEntity from '../utils/createEntity';
 import redisClient from '../utils/redis';
+import { TLibrarian } from '../utils/interface';
 
 /**
- * Librarian class mapped to `librarians` table
+ * Librarian controller
  */
-@Entity('librarians')
-class Librarian extends Base {
+class LibrarianController {
 
-
-  @Column({
-    type: 'varchar',
-    length: 100,
-    nullable: false,
-    unique: true
-  })
-  name: string;
-
-  @Column({
-    type: 'varchar',
-    length: 128,
-    unique: true
-  })
-  email: string;
-
-  @Column({
-    type: 'varchar',
-    length: 128,
-    unique: true
-  })
-  org_email: string;
-
-  @Column({
-    type: 'varchar',
-    length: 256,
-    nullable: false
-  })
-  password: string;
-
-  // relationship books-librarians
-  @OneToMany(() => BooksLibrarians, booksLibrarians => booksLibrarians.librarian)
-  booksToLibrarians: BooksLibrarians[];
 
   /**
    * #### This endpoint uses the user's `name` to generate a unique platform
@@ -61,7 +21,7 @@ class Librarian extends Base {
    * @param request 
    * @param response 
    */
-  static async postNewLibrarian(request: Request, response: Response) {
+  static async addLibrarian(request: Request, response: Response) {
     const { email, name } = request.body;
 
     if (!email) {
@@ -73,14 +33,14 @@ class Librarian extends Base {
 
     // generate unique email and password for user (Librarian)
     const [org_email, password] = await Promise.all([
-      setUniqueEmail(name), setUnqiuePassword()
+      setEmail(name), setPassword()
     ]);
 
     // create new librarian
-    const newLibrarian: NewLibrarian = {
+    const librarian: TLibrarian = {
       name, email, org_email, password
     }
-    // check for truthy result
+
     const librarianCreated = await CreateEntity.newLibrarian(newLibrarian);
     if (!librarianCreated) {
       return response.status(400).json({ error: 'Librarian not added' });

@@ -1,7 +1,5 @@
 import 'dotenv/config';
 
-type uniqueReturn = ReturnType<typeof generateRandom>;
-
 /**
  * Generates random string for the user.
  * @returns string
@@ -28,7 +26,7 @@ export function generateRandom(numLength: number): Promise<string> {
  * Generate email field. A unique email is assigned
  * to each librarian with suffix - `@lms.com`
  */
-export async function setUniqueEmail(name: string): Promise<string> {
+export async function setEmail(name: string): Promise<string> {
   return new Promise((resolve, reject) => {
     generateRandom(3)
       .then((randomChars) => {
@@ -52,7 +50,7 @@ export async function setUniqueEmail(name: string): Promise<string> {
  * ### sets a unique password for the librarian
  * @returns a string
  */
-export async function setUnqiuePassword(): uniqueReturn {
-  const userPassword: Awaited<uniqueReturn> = await generateRandom(12);
+export async function setPassword() {
+  const userPassword = await generateRandom(12);
   return userPassword;
 }
