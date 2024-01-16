@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
-
-
 import { setEmail, setPassword } from '../utils/getLibrarianEmail';
 import { createAccessToken } from '../middlewares/authAccess';
 import PasswordAuth from '../utils/passwordAuth';
-import CreateEntity from '../utils/createEntity';
 import redisClient from '../utils/redis';
 import { TLibrarian } from '../utils/interface';
+import LibrarianRepo from '../repositories/LibrarianRepo';
+
 
 /**
  * Librarian controller
@@ -17,9 +16,7 @@ class LibrarianController {
   /**
    * #### This endpoint uses the user's `name` to generate a unique platform
    * #### `org_email` and `password`. In case of forgotten password,
-   * #### the original email is used to reset the password.
-   * @param request 
-   * @param response 
+   * #### the original email is used to reset the password. 
    */
   static async addLibrarian(request: Request, response: Response) {
     const { email, name } = request.body;
@@ -41,38 +38,38 @@ class LibrarianController {
       name, email, org_email, password
     }
 
-    const librarianCreated = await CreateEntity.newLibrarian(newLibrarian);
+    const librarianCreated = await LibrarianRepo.addLibrarian(librarian);
     if (!librarianCreated) {
       return response.status(400).json({ error: 'Librarian not added' });
     }
-    // send the org_email and password
+
     return response.status(201).json(
-      { org_email, password, message: 'New Librarian created' }
+      { id: librarianCreated.id, org_email, password, message: 'New Librarian created' }
     );
   }
 
   /**
-   * ### endpoint to login a librarian
-   * @param request
-   * @param response
-   * @returns Response
+   * ### login a librarian
    */
   static async loginLibrarian(request: Request, response: Response) {
     const { org_email, password } = request.body;
+
     if (!org_email) {
       return response.status(400).json({ error: 'Missing org_email' });
     }
     if (!password) {
       return response.status(400).json({ error: 'Missing password' });
     }
+
     // verify librarian
-    const librarian = await dataSource.getLibrarian(org_email);
+    const librarian = await LibrarianRepo.getLibrarian(org_email);
     if (!librarian) {
       return response.status(404).json({ error: 'Not found' });
     }
+
     // verify password
-    const passwordVerified = await PasswordAuth.verifyPassword(password, librarian.password);
-    if (!passwordVerified) {
+    const isVerified = await PasswordAuth.verifyPassword(password, librarian.password);
+    if (!isVerified) {
       return response.status(400).json({ error: 'Wrong password' });
     }
 
@@ -81,7 +78,7 @@ class LibrarianController {
     // set access token in cookies; maxAge is 5 days
     response.cookie('rememberUser', accessToken, { httpOnly: true, maxAge: 432000 * 1000 });
 
-    return response.status(200).json({ org_email, message: 'Login successful' });
+    return response.status(200).json({ id: librarian.id, org_email, message: 'Login successful' });
   }
 
 
@@ -104,4 +101,4 @@ class LibrarianController {
   }
 }
 
-export default Librarian;
+export default LibrarianController;

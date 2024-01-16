@@ -4,7 +4,7 @@ import BooksUsers from './BookUserController';
 import dataSource from '../utils/dataSource';
 
 import CreateEntity from '../utils/createEntity';
-import CacheData from '../middlewares/getSetCacheData';
+import CacheData from '../middlewares/CacheData';
 import { CacheInterface, EntityInterface, UserInterface } from '../utils/interface';
 import skipItemsForPage from '../utils/pagination';
 

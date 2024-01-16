@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 // middlewares
 import { verifyAccessToken } from '../../middlewares/authAccess';
-import CacheData from '../../middlewares/getSetCacheData';
+import CacheData from '../../middlewares/CacheData';
 // controllers
 import User from '../../controllers/UserController';
 import Librarian from '../../controllers/LibControllers';

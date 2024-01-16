@@ -4,7 +4,7 @@ import { TBook } from '../utils/interface';
 
 import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../backgroundJobs';
 import skipItemsForPage from '../utils/pagination';
-import CacheData from '../middlewares/getSetCacheData';
+import CacheData from '../middlewares/CacheData';
 import BookRepo from '../repositories/BookRepo';
 
 

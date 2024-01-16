@@ -5,6 +5,7 @@ import { Secret } from 'jsonwebtoken';
 
 import redisClient from '../utils/redis';
 import dataSource from '../utils/dataSource';
+import LibrarianRepo from '../repositories/LibrarianRepo';
 
 type DecodedReturn = string | jwt.JwtPayload | undefined;
 const secretKey = process.env.JWT || 'secret';
@@ -14,7 +15,7 @@ const secretKey = process.env.JWT || 'secret';
 * @param librarianId id of librarian
 * @returns a promise
 */
-export function createAccessToken(librarianOrgEmail: string): Promise<string | undefined> {
+export function createAccessToken(orgEmail: string) {
     return new Promise((resolve, reject) => {
         /**
          * options for creating token:
@@ -22,16 +23,19 @@ export function createAccessToken(librarianOrgEmail: string): Promise<string | u
          */
         const options = {
             expiresIn: '5 days',
-            audience: librarianOrgEmail
+            audience: orgEmail
         }
         // create web token
-        jwt.sign({ librarianOrgEmail }, secretKey, options, async (error, accessToken) => {
+        jwt.sign({ orgEmail }, secretKey, options, async (error, accessToken) => {
             if (error) {
                 reject(error);
             }
+
             // cache token for five days in redis using librarianId
-            const key = `auth_${librarianOrgEmail}`;
-            await redisClient.set(key, accessToken, 432000);
+            const key = `auth_${orgEmail}`;
+            const value = accessToken as string;
+            await redisClient.set(key, value);
+
             // token will be set in cookie
             resolve(accessToken);
         });
@@ -66,7 +70,7 @@ function decodeAccessToken(accessToken: string): Promise<DecodedReturn> {
    * @returns Nothing, grants access to the next function
    */
 export async function verifyAccessToken(request: Request, response: Response, next: NextFunction) {
-    let librarianOrgEmail: string;
+    let orgEmail: string;
 
     // get access token from request cookie
     const accessToken: string = request.cookies.rememberUser;
@@ -78,23 +82,26 @@ export async function verifyAccessToken(request: Request, response: Response, ne
     try {
         const decodedToken: DecodedReturn = await decodeAccessToken(accessToken);
         if (!decodedToken || typeof decodedToken === 'string') {
-            librarianOrgEmail = '';
+            orgEmail = '';
         } else {
-            librarianOrgEmail = decodedToken.librarianOrgEmail;
+            orgEmail = decodedToken.librarianOrgEmail;
         }
+
         // get accessToken from cache, if not expired;
         // authentication is repeated here but required for better security
-        const cachedaccessToken = await redisClient.get(`auth_${librarianOrgEmail}`);
+        const cachedaccessToken = await redisClient.get(`auth_${orgEmail}`);
         if (!cachedaccessToken) {
             return response.status(401).json({ error: 'Unauthorized' });
         }
+
         // verify user
-        const librarian = await dataSource.getLibrarian(librarianOrgEmail, false);
+        const librarian = await LibrarianRepo.getLibrarian(orgEmail);
         if (!librarian) {
             return response.status(401).json({ error: 'Unauthorized' });
         }
+
         // pass librarian org_email to next function
-        response.locals.librarianOrgEmail = librarianOrgEmail;
+        response.locals.librarianOrgEmail = orgEmail;
         next();
 
     } catch (error) {

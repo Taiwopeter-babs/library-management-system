@@ -1,5 +1,3 @@
-import { NewLibrarian, NewBook, UserInterface } from "./interface";
-
 import Book from "../controllers/BookController";
 import Librarian from "../controllers/LibControllers";
 import User from "../controllers/UserController";
@@ -33,7 +31,7 @@ export default class CreateEntity {
     return savedEntity;
   }
 
-  
+
   static async newUser(userObj: UserInterface) {
     let savedUser: User;
 
