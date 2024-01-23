@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 
-app.use('/api', indexRouter);
+app.use('/api/v1', indexRouter);
 
 const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 5000;
 app.listen(port, async () => {

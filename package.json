@@ -2,12 +2,10 @@
   "name": "library-management-system",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/app.ts",
   "scripts": {
     "start-server": "NODE_ENV=development nodemon --exec ts-node ./src/app.ts",
-    "start-worker": "NODE_ENV=development nodemon --exec ts-node ./src/processJobs.ts",
-    "start-test_worker": "NODE_ENV=test ts-node ./src/processJobs.ts",
-    "start-test_server": "NODE_ENV=test ts-node ./src/app.ts",
+    "start-test-server": "NODE_ENV=test ts-node ./src/app.ts",
     "test": "NODE_ENV=test mocha --require ts-node/register",
     "test-env": "NODE_ENV=test ts-node ./test.ts"
   },

@@ -38,13 +38,11 @@ export default class LibrarianRepo {
         return librarian;
     }
 
-    static async getAllLibrarians(toSkip: number) {
+    static async getAllLibrarians(pagesToskip: number) {
 
         const librarian = await this.queryBuilder.select('Librarian')
             .leftJoinAndSelect("librarian.users", "users")
-            .leftJoinAndSelect("librarian.authors", "authors")
-            .leftJoinAndSelect("librarian.genres", "genres")
-            .skip(toSkip).take(25)
+            .skip(pagesToskip).take(25)
             .getMany()
         return librarian;
     }

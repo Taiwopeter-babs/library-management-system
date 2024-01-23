@@ -1,13 +1,36 @@
 import 'dotenv/config';
 import { DataSourceOptions } from 'typeorm';
-import { configArray } from './config';
 
 
-const ormConfig: Array<DataSourceOptions> = [
+const {
+    HOST, PORT, USERNAME, PASSWORD,
+    DATABASE, DATABASE_TEST, NODE_ENV
+} = process.env;
+
+const configOptions = {
+    devConfig: {
+        host: HOST,
+        port: PORT ? parseInt(PORT, 10) : 3306,
+        username: USERNAME,
+        password: PASSWORD,
+        database: DATABASE,
+    },
+
+    testConfig: {
+        host: HOST,
+        port: PORT ? parseInt(PORT, 10) : 3306,
+        username: USERNAME,
+        password: PASSWORD,
+        database: DATABASE_TEST,
+    }
+}
+
+
+const ormConfig: DataSourceOptions[] = [
     {
         name: "development",
         type: "mysql",
-        ...configArray[0],
+        ...configOptions.devConfig,
         entities: [
             "src/models/*.ts"
         ],
@@ -18,7 +41,7 @@ const ormConfig: Array<DataSourceOptions> = [
     {
         name: "test",
         type: "mysql",
-        ...configArray[1],
+        ...configOptions.testConfig,
         entities: [
             "src/models/*.ts"
         ],
@@ -33,9 +56,8 @@ const ormConfig: Array<DataSourceOptions> = [
  * ### select database for ORM
  */
 const setOrmConfig = (): DataSourceOptions => {
-    const nodeEnv = process.env.NODE_ENV;
 
-    if (nodeEnv === 'development') {
+    if (NODE_ENV === 'development') {
         return ormConfig[0];
     }
     return ormConfig[1];

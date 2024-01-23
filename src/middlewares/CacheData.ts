@@ -2,9 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import redisClient from "../utils/redis";
 import { TCache } from "../utils/interface";
 
-let hashKey: string;
-let usersKey: string;
-let booksKey: string;
 
 export default class CacheData {
 

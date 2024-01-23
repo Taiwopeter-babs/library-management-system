@@ -1,4 +1,3 @@
-/// <reference path='../utils/lms.d.ts' />
 import 'dotenv/config';
 import { Column, Entity, OneToMany } from 'typeorm';
 
@@ -33,7 +32,7 @@ class Librarian extends Base {
     length: 128,
     unique: true
   })
-  org_email: string;
+  orgEmail: string;
 
   @Column({
     type: 'varchar',
@@ -44,7 +43,7 @@ class Librarian extends Base {
 
   // relationship books-librarians
   @OneToMany(() => BooksLibrarians, booksLibrarians => booksLibrarians.librarian)
-  booksToLibrarians?: BooksLibrarians[];
+  booksToLibrarians: BooksLibrarians[];
 }
 
 export default Librarian;

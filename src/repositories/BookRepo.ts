@@ -31,8 +31,6 @@ export default class BookRepo {
 
         const book = await this.queryBuilder.select('book')
             .leftJoinAndSelect("book.users", "users")
-            .leftJoinAndSelect("book.authors", "authors")
-            .leftJoinAndSelect("book.genres", "genres")
             .where("book.id = :id", { id: bookId })
             .getOne()
         return book;
@@ -42,8 +40,6 @@ export default class BookRepo {
 
         const books = await this.queryBuilder.select('book')
             .leftJoinAndSelect("book.users", "users")
-            .leftJoinAndSelect("book.authors", "authors")
-            .leftJoinAndSelect("book.genres", "genres")
             .skip(toSkip).take(25)
             .getMany()
         return books;

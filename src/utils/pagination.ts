@@ -3,22 +3,19 @@ import { Request } from "express";
 /**
  * ### Checks `request.query.page` and verifies that it is
  * ### a digit.
- * @param request 
  * @returns Items to skip for pagination
  */
-export default function skipItemsForPage(request: Request) {
+export default function itemsToSkip(request: Request, count: number) {
     let pageNum: number;
-    const checkDigit = /^[0-9]+$/g; // regex to check digit
+    const isDigit = /^[0-9]+$/g;
 
-    const page = request.query.page;
+    const page = request.query.page as string;
 
-    // validate that page is a number
-    if (!page || typeof page !== 'string') {
-        pageNum = 0
+    if (page && isDigit.test(page)) {
+        pageNum = parseInt(page, 10) - 1;
     } else {
-        pageNum = !checkDigit.test(page) ? 0 : parseInt(page, 10) - 1;
+        pageNum = 0;
     }
 
-    // set pagination
-    return pageNum * 25;
+    return pageNum * count;
 }

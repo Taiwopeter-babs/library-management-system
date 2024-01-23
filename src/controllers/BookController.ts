@@ -2,10 +2,10 @@ import { Request, Response } from 'express';
 
 import { TBook } from '../utils/interface';
 
-import { addAuthorsToQueueAndProcess, addGenresToQueueAndProcess } from '../backgroundJobs';
-import skipItemsForPage from '../utils/pagination';
 import CacheData from '../middlewares/CacheData';
 import BookRepo from '../repositories/BookRepo';
+import itemsToSkip from '../utils/pagination';
+
 
 
 /**
@@ -25,7 +25,7 @@ class BookController {
 
     // validate input
     if (!name) {
-      return response.status(400).json({ error: 'Missing name' });
+      return response.status(400).json({ statusCode: 400, error: 'Missing name' });
     }
 
     if (quantity) {
@@ -43,74 +43,68 @@ class BookController {
       publisher = null;
     }
 
-    const savedBook = await BookRepo.addBook({ name, quantity, publisher });
-    if (!savedBook) {
-      return response.status(400).json({ error: 'Book not saved' });
+    const toSave: TBook = {
+      name, publisher, quantity,
+      authors: authors ? authors.join() : null,
+      genres: genres ? genres.join() : null
     }
 
-    /**
-     * Background jobs for linking authors and genres with a book:
-     * In each array, query the genre or author by name; if it does not exist,
-     * create that author or genre and link to the book that is created
-     */
     try {
-      await addAuthorsToQueueAndProcess(authors, savedBook);
-      await addGenresToQueueAndProcess(genres, savedBook);
-    } catch (error: any) {
-
-      switch (error.message) {
-
-        case "Author absent":
-          return response.status(201).json(
-            { bookName: savedBook.name, message: 'Could not add book with author' }
-          );
-        case "Genre absent":
-          return response.status(201).json(
-            { bookName: savedBook.name, message: 'Could not add book with genre' }
-          );
-
+      const savedBook = await BookRepo.addBook(toSave);
+      if (!savedBook) {
+        return response.status(400).json({ statusCode: 400, error: 'Book not saved' });
       }
+      const { id, createdAt, updatedAt } = savedBook;
+
+      let bookObj: TBook = {
+        id,
+        name,
+        quantity,
+        publisher,
+        authors,
+        genres,
+        createdAt,
+        updatedAt
+      };
+
+      return response.status(201).json({ statusCode: 201, message: 'Book added', ...bookObj });
+
+    } catch (error: any) {
+      return response.status(500).json(
+        { statusCode: 500, error: 'Internal Server Error' }
+      );
     }
-
-    const { id, createdAt, updatedAt } = savedBook;
-
-    let bookObj: TBook = {
-      id,
-      name,
-      quantity,
-      publisher,
-      users: [],
-      authors,
-      genres,
-      createdAt,
-      updatedAt
-    };
-    return response.status(201).json({ ...bookObj, message: 'Book added' });
   }
+
 
   /**
    * ### Get all books from the database
-   * @param request
-   * @param response
-   * @returns 
    */
   static async getAllBooks(request: Request, response: Response) {
     // get number of items to skip
-    const toSkipForPage = skipItemsForPage(request);
+    const pagesToskip = itemsToSkip(request, 25);
 
-    const books = await BookRepo.getAllBooks(toSkipForPage);
-    const allBooks: Array<TBook> = books?.map((book) => {
-      let bookObj: TBook = {
+    const books = await BookRepo.getAllBooks(pagesToskip);
+
+    if (books.length === 0) {
+      return response.status(200).json({ statusCode: 200, message: 'success', books });
+    }
+
+    const allBooks = books.map((book) => {
+      let bookObj = {
         name: book.name,
         id: book.id,
         publisher: book.publisher,
+        authors: book.authors ? book.authors.split(',') : [],
+        genres: book.genres ? book.genres.split(',') : [],
         quantity: book.quantity,
         createdAt: book.createdAt,
         updatedAt: book.updatedAt
       };
       return bookObj;
+
     });
-    return response.status(200).json({ message: 'success', ...allBooks });
+    return response.status(200).json({ statusCode: 200, message: 'success', ...allBooks });
   }
 
   /**
@@ -118,14 +112,13 @@ class BookController {
    */
   static async getBook(request: Request, response: Response) {
     let idUsers: string[];
-    let idAuthors: string[];
 
     const { bookId } = request.params;
 
     const book = await BookRepo.getBook(bookId);
 
     if (!book) {
-      return response.status(404).json({ error: 'Book not found' });
+      return response.status(404).json({ statusCode: 404, error: 'Book not found' });
     }
 
     // users linked to book
@@ -135,12 +128,13 @@ class BookController {
       idUsers = [];
     }
 
-    // authors linked to book
-
     let bookObj = {
       id: book.id,
       name: book.name,
       quantity: book.quantity,
+      publisher: book.publisher,
+      authors: book.authors ? book.authors.split(',') : [],
+      genres: book.genres ? book.genres.split(',') : [],
       users: book.booksToUsers,
       createdAt: book.createdAt,
       updatedAt: book.updatedAt
@@ -149,7 +143,7 @@ class BookController {
     // cache data for recurring requests
     await CacheData.setData(`${book.id}:data`, JSON.stringify(bookObj));
 
-    return response.status(200).json({ ...bookObj });
+    return response.status(200).json({ statusCode: 200, ...bookObj });
   }
 
 
@@ -165,7 +159,7 @@ class BookController {
     // get object
     const book = await BookRepo.getBook(id);
     if (!book) {
-      return response.status(404).json({ error: 'Book not found' });
+      return response.status(404).json({ statusCode: 404, error: 'Book not found' });
     }
 
     // define object for update
@@ -176,7 +170,7 @@ class BookController {
 
     const isUpdated = await BookRepo.updateBook(id, data);
     if (!isUpdated) {
-      return response.status(500).json({ error: 'Internal Server Error' });
+      return response.status(500).json({ statusCode: 500, error: 'Internal Server Error' });
     }
     return response.status(200).json(data);
 
@@ -193,12 +187,12 @@ class BookController {
     // get object
     const book = await BookRepo.getBook(id);
     if (!book) {
-      return response.status(404).json({ error: 'Book not found' });
+      return response.status(404).json({ statusCode: 404, error: 'Book not found' });
     }
 
     const isDeleted = await BookRepo.deleteBook(id);
     if (!isDeleted) {
-      return response.status(500).json({ error: 'Internal Server Error' });
+      return response.status(500).json({ statusCode: 500, error: 'Internal Server Error' });
     }
     return response.status(204).json({});
   }

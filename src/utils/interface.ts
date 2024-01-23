@@ -10,8 +10,9 @@ type TBase = {
  */
 export type TLibrarian = {
   email: string;
-  org_email: string;
-  password: string;
+  orgEmail: string;
+  password?: string;
+  books?: Array<string | null>
 } & TBase;
 
 
@@ -19,9 +20,7 @@ export type TBook = {
   quantity: number;
   publisher: string | null;
   users?: Array<string>;
-  authors?: Array<string>;
-  genres?: Array<string>;
-} & TBase;
+} & TBase & { [key in 'authors' | 'genres']: string | null };
 
 
 
