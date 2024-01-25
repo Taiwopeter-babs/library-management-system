@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany } from 'typeorm';
-import Base from './Base';
-import BooksUsers from './BooksUsers';
+import Base from '../models/Base';
+import BooksUsers from '../Books/BooksUsers';
 
 
 /**

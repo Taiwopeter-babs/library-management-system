@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-
 import { TBook } from '../utils/interface';
 
 import CacheData from '../middlewares/CacheData';
-import BookRepo from '../repositories/BookRepo';
+import BookRepo from './BookRepo';
 import itemsToSkip from '../utils/pagination';
 
 
@@ -28,25 +27,23 @@ class BookController {
       return response.status(400).json({ statusCode: 400, error: 'Missing name' });
     }
 
-    if (quantity) {
-      // check if it's a number
-      if (!checkDigit.test(quantity)) {
-        quantity = 0;
-      } else {
-        quantity = parseInt(quantity, 10);
-      }
-    } else {
+    if ((quantity && !checkDigit.test(quantity)) || !quantity) {
       quantity = 0;
+    } else {
+      quantity = parseInt(quantity, 10);
     }
+
 
     if (!publisher) {
       publisher = null;
     }
 
+    const date = new Date();
     const toSave: TBook = {
       name, publisher, quantity,
-      authors: authors ? authors.join() : null,
-      genres: genres ? genres.join() : null
+      createdAt: date, updatedAt: date,
+      authors: authors,
+      genres: genres
     }
 
     try {
@@ -54,17 +51,12 @@ class BookController {
       if (!savedBook) {
         return response.status(400).json({ statusCode: 400, error: 'Book not saved' });
       }
+
       const { id, createdAt, updatedAt } = savedBook;
 
       let bookObj: TBook = {
-        id,
-        name,
-        quantity,
-        publisher,
-        authors,
-        genres,
-        createdAt,
-        updatedAt
+        id, name, quantity, publisher, authors,
+        genres, createdAt, updatedAt
       };
 
       return response.status(201).json({ statusCode: 201, message: 'Book added', ...bookObj });
@@ -84,34 +76,36 @@ class BookController {
     // get number of items to skip
     const pagesToskip = itemsToSkip(request, 25);
 
-    const books = await BookRepo.getAllBooks(pagesToskip);
+    try {
+      const books = await BookRepo.getAllBooks(pagesToskip);
+      if (!books) {
+        return response.status(200).json({ statusCode: 500, message: 'Internal Server Error' });
+      }
 
-    if (books.length === 0) {
-      return response.status(200).json({ statusCode: 200, message: 'success', books });
+
+      const allBooks = books.map((book) => {
+        let bookObj = {
+          name: book.name, id: book.id, publisher: book.publisher,
+          authors: book.authors ? book.authors.split(',') : [],
+          genres: book.genres ? book.genres.split(',') : [],
+          quantity: book.quantity, createdAt: book.createdAt,
+          updatedAt: book.updatedAt
+        };
+        return bookObj;
+
+      });
+      return response.status(200).json({ statusCode: 200, message: 'success', ...allBooks });
+
+    } catch (error) {
+      return response.status(200).json({ statusCode: 500, message: 'Internal Server Error' });
     }
 
-    const allBooks = books.map((book) => {
-      let bookObj = {
-        name: book.name,
-        id: book.id,
-        publisher: book.publisher,
-        authors: book.authors ? book.authors.split(',') : [],
-        genres: book.genres ? book.genres.split(',') : [],
-        quantity: book.quantity,
-        createdAt: book.createdAt,
-        updatedAt: book.updatedAt
-      };
-      return bookObj;
-
-    });
-    return response.status(200).json({ statusCode: 200, message: 'success', ...allBooks });
   }
 
   /**
    * ### retrieves a book
    */
   static async getBook(request: Request, response: Response) {
-    let idUsers: string[];
 
     const { bookId } = request.params;
 
@@ -121,29 +115,11 @@ class BookController {
       return response.status(404).json({ statusCode: 404, error: 'Book not found' });
     }
 
-    // users linked to book
-    if (book.booksToUsers.length > 0) {
-      idUsers = book.booksToUsers.map((user) => user.userId)
-    } else {
-      idUsers = [];
-    }
-
-    let bookObj = {
-      id: book.id,
-      name: book.name,
-      quantity: book.quantity,
-      publisher: book.publisher,
-      authors: book.authors ? book.authors.split(',') : [],
-      genres: book.genres ? book.genres.split(',') : [],
-      users: book.booksToUsers,
-      createdAt: book.createdAt,
-      updatedAt: book.updatedAt
-    };
 
     // cache data for recurring requests
-    await CacheData.setData(`${book.id}:data`, JSON.stringify(bookObj));
+    await CacheData.setData(`${book.id}:data`, JSON.stringify(book));
 
-    return response.status(200).json({ statusCode: 200, ...bookObj });
+    return response.status(200).json({ statusCode: 200, ...book });
   }
 
 
@@ -156,23 +132,25 @@ class BookController {
     ({ name, quantity, publisher } = request.body);
     const { id } = request.params;
 
-    // get object
-    const book = await BookRepo.getBook(id);
-    if (!book) {
-      return response.status(404).json({ statusCode: 404, error: 'Book not found' });
-    }
+    try {
+      // get object
+      const book = await BookRepo.getBook(id);
+      if (!book) {
+        return response.status(404).json({ statusCode: 404, error: 'Book not found' });
+      }
 
-    // define object for update
-    const data = {
-      updatedAt: new Date(),
-      ...{ name, quantity, publisher }
-    };
+      const data = { name, quantity, publisher };
 
-    const isUpdated = await BookRepo.updateBook(id, data);
-    if (!isUpdated) {
+      const isUpdated = await BookRepo.updateBook(id, data);
+      if (!isUpdated) {
+        return response.status(500).json({ statusCode: 500, error: 'Internal Server Error' });
+      }
+      return response.status(200).json(data);
+
+    } catch (error) {
       return response.status(500).json({ statusCode: 500, error: 'Internal Server Error' });
     }
-    return response.status(200).json(data);
+
 
   }
   /**

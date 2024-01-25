@@ -2,8 +2,8 @@ import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 
-import redisClient from '../utils/redis';
-import LibrarianRepo from '../repositories/LibrarianRepo';
+import redisClient from '../storage/redis';
+import LibrarianRepo from '../Librarians/LibrarianRepo';
 
 type DecodedReturn = string | jwt.JwtPayload | undefined;
 const secretKey = process.env.JWT || 'secret';
@@ -69,6 +69,7 @@ export default class TokenAuth {
 
         // get access token from request cookie
         const accessToken: string = request.cookies.rememberUser;
+        console.log(accessToken);
         if (!accessToken) {
             return response.status(401).json(unauthorizedError);
         }
@@ -79,24 +80,26 @@ export default class TokenAuth {
             if (!decodedToken || typeof decodedToken === 'string') {
                 orgEmail = '';
             } else {
-                orgEmail = decodedToken.librarianOrgEmail;
+                orgEmail = decodedToken.orgEmail;
             }
 
             // get accessToken from cache, if not expired;
             // authentication is repeated here but required for better security
             const cachedaccessToken = await redisClient.get(`auth_${orgEmail}`);
+            console.log(cachedaccessToken)
             if (!cachedaccessToken) {
                 return response.status(401).json(unauthorizedError);
             }
 
             // verify user
-            const librarian = await LibrarianRepo.getLibrarian(orgEmail);
+            const librarian = await LibrarianRepo.getLibrarianByEmail(orgEmail);
+            console.log(librarian)
             if (!librarian) {
                 return response.status(401).json(unauthorizedError);
             }
 
             // pass librarian org_email to next function
-            response.locals.librarianOrgEmail = orgEmail;
+            response.locals.orgEmail = orgEmail;
             next();
 
         } catch (error) {

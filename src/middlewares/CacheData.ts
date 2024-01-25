@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import redisClient from "../utils/redis";
+import redisClient from "../storage/redis";
 import { TCache } from "../utils/interface";
 
 
@@ -7,8 +7,10 @@ export default class CacheData {
 
     static async getData(req: Request, res: Response, next: NextFunction) {
 
-        const { id } = req.params;
-        const key = `${id}:data`;
+        const { id, email } = req.params;
+
+        // use id or email
+        const key = `${!id ? email : id}:data`;
 
         const data = await redisClient.get(key)
 
@@ -21,13 +23,14 @@ export default class CacheData {
             ...JSON.parse(data)
         };
 
-        return res.status(200).json({ message: 'success', ...cachedResult });
+        return res.status(200).json({ statusCode: 200, message: 'success', ...cachedResult });
     }
 
     static async setData(key: string, data: string) {
 
         try {
-            await redisClient.set(key, data);
+            const result = await redisClient.set(key, data);
+            return result;
         } catch (error: any) {
             console.log(error.message);
         }

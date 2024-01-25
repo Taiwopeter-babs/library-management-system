@@ -1,12 +1,17 @@
+import { ObjectId } from "mongodb";
+
 type TBase = {
-  id?: string;
+  id?: string | ObjectId;
   name: string;
   updatedAt?: Date;
   createdAt?: Date;
 }
 
 /**
- * interface for a new Librarian
+ * Mongodb document type for librarians
+ * A reference to books are stored to prevent
+ * duplication of documents' data.
+ * 
  */
 export type TLibrarian = {
   email: string;
@@ -15,15 +20,19 @@ export type TLibrarian = {
   books?: Array<string | null>
 } & TBase;
 
-
+/** 
+ * ### Mongodb document type for books
+ */
 export type TBook = {
   quantity: number;
   publisher: string | null;
-  users?: Array<string>;
-} & TBase & { [key in 'authors' | 'genres']: string | null };
+} & TBase & { [key in 'authors' | 'genres']: Array<string | null> };
 
 
-
+/**
+ * Mongodb document type for users 
+ * A reference to books are stored instead of being embedded
+ */
 export type TUser = {
   email: string;
   books?: Array<string>;

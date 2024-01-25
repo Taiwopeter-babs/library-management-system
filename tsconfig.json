@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
+    "target": "es2017",
+    "module": "NodeNext",
     "outDir": "./dist/",
     // "rootDir": "./src/",
     "strict": true,
@@ -11,19 +11,11 @@
     "noImplicitAny": true,
     "noImplicitOverride": true,
     "strictPropertyInitialization": false,
-    "lib": [
-      "es5",
-      "es6"
-    ],
-    "moduleResolution": "node",
+    "lib": ["es5", "es6"],
+    "moduleResolution": "NodeNext",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "src/utils/*.d.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "src/utils/*.d.ts"]
 }

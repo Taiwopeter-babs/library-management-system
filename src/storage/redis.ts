@@ -32,10 +32,11 @@ class RedisClient {
    * ### set the value of a key in redis
    */
   async set(key: string, value: string) {
-    await this.redisClient.set(key, value, {
+    const val = await this.redisClient.set(key, value, {
       EX: 432000,
       NX: true,
     });
+    return val;
   }
 
   /**

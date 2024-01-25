@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import PassowordAuth from '../utils/passwordAuth';
 
 /**
  * Generates random string for the user.
@@ -51,6 +52,7 @@ export async function setEmail(name: string): Promise<string> {
  * @returns a string
  */
 export async function setPassword() {
-  const userPassword = await generateRandom(12);
-  return userPassword;
+  const password = await generateRandom(12);
+  const hash = await PassowordAuth.hashPassword(password)
+  return { password, hash };
 }
