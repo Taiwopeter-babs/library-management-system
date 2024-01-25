@@ -12,7 +12,9 @@ export default class CacheData {
         // use id or email
         const key = `${!id ? email : id}:data`;
 
-        const data = await redisClient.get(key)
+        const data = await redisClient.get(key);
+
+        console.log(data, 'data from cache');
 
         if (!data) {
             // pass to next function in middleware

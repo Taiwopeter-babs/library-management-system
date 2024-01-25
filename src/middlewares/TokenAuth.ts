@@ -69,7 +69,6 @@ export default class TokenAuth {
 
         // get access token from request cookie
         const accessToken: string = request.cookies.rememberUser;
-        console.log(accessToken);
         if (!accessToken) {
             return response.status(401).json(unauthorizedError);
         }
@@ -86,14 +85,13 @@ export default class TokenAuth {
             // get accessToken from cache, if not expired;
             // authentication is repeated here but required for better security
             const cachedaccessToken = await redisClient.get(`auth_${orgEmail}`);
-            console.log(cachedaccessToken)
             if (!cachedaccessToken) {
                 return response.status(401).json(unauthorizedError);
             }
 
             // verify user
             const librarian = await LibrarianRepo.getLibrarianByEmail(orgEmail);
-            console.log(librarian)
+
             if (!librarian) {
                 return response.status(401).json(unauthorizedError);
             }
